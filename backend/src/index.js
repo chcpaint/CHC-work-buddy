@@ -29,17 +29,32 @@ const PORT = process.env.PORT || 3001;
 
 // ─── Supabase & AI Clients ───────────────────────────────────
 export const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY  // Service key for backend (bypasses RLS where needed)
+  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_KEY || 'placeholder'
 );
 
-export const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Defensive initialization — server starts even if keys are missing
+export let anthropic = null;
+try {
+  if (process.env.ANTHROPIC_API_KEY) {
+    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  } else {
+    console.warn('⚠️  ANTHROPIC_API_KEY not set — AI chat will be unavailable');
+  }
+} catch (err) {
+  console.warn('⚠️  Failed to initialize Anthropic client:', err.message);
+}
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export let openai = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } else {
+    console.warn('⚠️  OPENAI_API_KEY not set — embeddings will be unavailable');
+  }
+} catch (err) {
+  console.warn('⚠️  Failed to initialize OpenAI client:', err.message);
+}
 
 // ─── Security Middleware ──────────────────────────────────────
 app.use(helmet({
