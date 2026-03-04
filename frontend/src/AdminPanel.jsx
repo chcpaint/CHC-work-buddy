@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── Config ───────────────────────────────────────────────────
-const API_BASE = typeof import !== "undefined" && import.meta?.env?.VITE_API_URL
-  ? import.meta.env.VITE_API_URL
-  : "http://localhost:3001";
+const API_BASE = import.meta?.env?.VITE_API_URL || "http://localhost:3001";
 
 const TABS = [
   { slug: "admin-intake",  label: "Admin / Intake",  icon: "📋", color: "#3b82f6" },
