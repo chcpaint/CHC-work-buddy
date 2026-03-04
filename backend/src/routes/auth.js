@@ -50,6 +50,49 @@ authRouter.post('/register', async (req, res) => {
 
     if (error) return res.status(400).json({ error: error.message });
 
+    // If email confirmation is enabled, session will be null.
+    // Auto-confirm the user via admin API so they can sign in immediately.
+    if (!data.session && data.user) {
+      logger.info('Auto-confirming user', { userId: data.user.id, email });
+
+      // Confirm the user's email via admin API
+      const { error: confirmError } = await supabase.auth.admin.updateUserById(
+        data.user.id,
+        { email_confirm: true }
+      );
+
+      if (confirmError) {
+        logger.error('Auto-confirm failed', { error: confirmError.message });
+        // Still return success — user was created, they just need manual confirmation
+        return res.json({
+          user: data.user,
+          message: 'Account created. Please check your email to confirm, then sign in.',
+          needsConfirmation: true,
+        });
+      }
+
+      // Now sign them in to get a session
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email, password,
+      });
+
+      if (signInError) {
+        logger.error('Post-confirm sign-in failed', { error: signInError.message });
+        return res.json({
+          user: data.user,
+          message: 'Account created and confirmed. Please sign in.',
+          needsConfirmation: false,
+        });
+      }
+
+      return res.json({
+        token: signInData.session.access_token,
+        user: signInData.user,
+        message: 'Registration successful',
+      });
+    }
+
+    // If session exists (email confirmation disabled), return it directly
     res.json({
       token: data.session?.access_token,
       user: data.user,

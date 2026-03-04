@@ -632,6 +632,13 @@ export default function App() {
         setToken(data.token);
         setUser(data.user);
         localStorage.setItem("bsai_token", data.token);
+      } else if (data.needsConfirmation) {
+        setAuthError(data.message || "Account created. Please check your email to confirm, then sign in.");
+        setLoginMode(true); // Switch to login mode
+      } else if (data.message && !data.error) {
+        // Account created but auto-sign-in failed — prompt to sign in
+        setAuthError(data.message);
+        setLoginMode(true);
       } else {
         setAuthError(data.error || "Authentication failed");
       }
