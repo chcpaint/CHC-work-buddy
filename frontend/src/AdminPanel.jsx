@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── Config ───────────────────────────────────────────────────
-const API_BASE = import.meta?.env?.VITE_API_URL || "http://localhost:3001";
+const API_BASE = import.meta?.env?.VITE_API_URL || "https://chc-work-buddy-production-5b0e.up.railway.app";
 
 const TABS = [
   { slug: "admin-intake",  label: "Admin / Intake",  icon: "📋", color: "#3b82f6" },

@@ -11,7 +11,7 @@ const TABS = [
   { slug: "hand-back",     label: { en: "Hand Back",        fr: "Remise Client",      es: "Entrega" },             icon: "🤝", color: "#22c55e" },
 ];
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_BASE = import.meta.env.VITE_API_URL || "https://chc-work-buddy-production-5b0e.up.railway.app";
 
 // ─── Avatar Component ─────────────────────────────────────────
 function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange }) {
