@@ -101,6 +101,9 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Trust Railway's reverse proxy so X-Forwarded-For works correctly
+app.set('trust proxy', 1);
+
 // ─── Rate Limiting ────────────────────────────────────────────
 
 // General API rate limit
@@ -110,6 +113,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again shortly.' },
+  validate: { trustProxy: false, xForwardedForHeader: false },
 });
 
 // Stricter limit for AI agent (expensive)
@@ -117,6 +121,7 @@ const agentLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,                    // 30 AI requests/min per IP
   message: { error: 'AI request limit reached. Please wait a moment.' },
+  validate: { trustProxy: false, xForwardedForHeader: false },
 });
 
 // Upload limiter
@@ -124,6 +129,7 @@ const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,  // 1 hour
   max: 50,                    // 50 uploads/hour
   message: { error: 'Upload limit reached.' },
+  validate: { trustProxy: false, xForwardedForHeader: false },
 });
 
 app.use('/api', apiLimiter);
