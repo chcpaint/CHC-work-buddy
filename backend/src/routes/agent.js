@@ -2,7 +2,7 @@
 // Voice queries like "show me how to use body filler" trigger video results
 
 import { Router } from 'express';
-import { anthropic, supabase } from '../index.js';
+import { anthropic, openai, supabase } from '../index.js';
 import { generateEmbedding, matchDocuments } from '../services/rag.js';
 import { detectLanguage, getSystemPrompt } from '../services/anthropic.js';
 import { logger } from '../utils/logger.js';
