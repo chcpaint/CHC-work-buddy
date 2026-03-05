@@ -942,15 +942,25 @@ export default function App() {
   useEffect(() => {
     if (!token) return;
     setContentLoading(true);
-    fetch(`${API_BASE}/api/documents?tab=${activeTab}&limit=20`, {
+    fetch(`${API_BASE}/api/documents?tab=${activeTab}&limit=50`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          console.error(`[BSW] Documents fetch failed: ${r.status} ${r.statusText}`);
+          return { documents: [] };
+        }
+        return r.json();
+      })
       .then(data => {
+        console.log(`[BSW] Tab "${activeTab}" documents:`, data.documents?.length || 0);
         setTabContent(prev => ({ ...prev, [activeTab]: data.documents || [] }));
         setContentLoading(false);
       })
-      .catch(() => setContentLoading(false));
+      .catch(err => {
+        console.error('[BSW] Documents fetch error:', err);
+        setContentLoading(false);
+      });
   }, [activeTab, token]);
 
   // Search

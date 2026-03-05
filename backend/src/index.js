@@ -222,6 +222,42 @@ app.get('/api/maintenance/test-agent', async (req, res) => {
   }
 });
 
+// ─── Quick DB health check (no auth) — check document & media counts ──
+app.get('/api/maintenance/db-check', async (req, res) => {
+  try {
+    const [docResult, mediaResult, docInactive, mediaInactive] = await Promise.all([
+      supabase.from('documents').select('id, title, tab_slug, is_active', { count: 'exact' }).eq('is_active', true),
+      supabase.from('media_items').select('id, title, tab_slug, is_active', { count: 'exact' }).eq('is_active', true),
+      supabase.from('documents').select('id, title, tab_slug', { count: 'exact' }).eq('is_active', false),
+      supabase.from('media_items').select('id, title, tab_slug', { count: 'exact' }).eq('is_active', false),
+    ]);
+
+    const tabSlugCounts = {};
+    (docResult.data || []).forEach(d => {
+      const key = d.tab_slug || '(null)';
+      tabSlugCounts[key] = (tabSlugCounts[key] || 0) + 1;
+    });
+
+    res.json({
+      documents: {
+        active: docResult.data?.length || 0,
+        inactive: docInactive.data?.length || 0,
+        byTab: tabSlugCounts,
+        sample: (docResult.data || []).slice(0, 5).map(d => ({ id: d.id, title: d.title, tab_slug: d.tab_slug })),
+        error: docResult.error?.message,
+      },
+      media: {
+        active: mediaResult.data?.length || 0,
+        inactive: mediaInactive.data?.length || 0,
+        sample: (mediaResult.data || []).slice(0, 5).map(m => ({ id: m.id, title: m.title, tab_slug: m.tab_slug })),
+        error: mediaResult.error?.message,
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── Maintenance: one-time embedding backfill (no auth) ──────
 app.all('/api/maintenance/generate-embeddings', async (req, res) => {
   try {
