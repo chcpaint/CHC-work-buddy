@@ -560,18 +560,29 @@ function DocViewer({ doc, onClose, token, theme = "dark" }) {
   const colors = themes[theme];
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
-    if (!doc?.id) return;
+    if (!doc?.id) { setLoading(false); return; }
+    setLoading(true);
+    setContent(null);
+    setFetchError(null);
     fetch(`${API_BASE}/api/documents/${doc.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
-        setContent(data.document?.full_content || null);
+        setContent(data.document?.full_content || data.document?.description || null);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(err => {
+        console.error("DocViewer fetch error:", err);
+        setFetchError(err.message);
+        setLoading(false);
+      });
   }, [doc?.id, token]);
 
   if (!doc) return null;
@@ -658,6 +669,17 @@ function DocViewer({ doc, onClose, token, theme = "dark" }) {
               <div style={{ fontSize: 24, marginBottom: 12, animation: "pulse 1.5s ease-in-out infinite" }}>⏳</div>
               Loading document...
             </div>
+          ) : fetchError ? (
+            <div style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Failed to load document</div>
+              <div style={{ fontSize: 12, color: "#ef4444" }}>{fetchError}</div>
+              {doc.description && (
+                <div style={{ marginTop: 20, textAlign: "left", color: colors.textPrimary, fontSize: 14, lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+                  {doc.description}
+                </div>
+              )}
+            </div>
           ) : content ? (
             <div style={{
               color: colors.textPrimary,
@@ -671,10 +693,17 @@ function DocViewer({ doc, onClose, token, theme = "dark" }) {
           ) : (
             <div style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
-              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>No content preview available</div>
+              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>
+                {doc.description ? "Document content:" : "No content preview available"}
+              </div>
+              {doc.description && (
+                <div style={{ marginTop: 12, textAlign: "left", color: colors.textPrimary, fontSize: 14, lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+                  {doc.description}
+                </div>
+              )}
               {doc.file_url && (
                 <a href={doc.file_url} target="_blank" rel="noreferrer" style={{
-                  display: "inline-block", marginTop: 8,
+                  display: "inline-block", marginTop: 16,
                   padding: "8px 20px", borderRadius: 8,
                   background: `${colors.accentPrimary}20`,
                   color: colors.accentPrimary,
