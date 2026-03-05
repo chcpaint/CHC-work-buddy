@@ -208,6 +208,69 @@ ingestRouter.post('/media', upload.single('file'), async (req, res) => {
   }
 });
 
+// POST /api/ingest/generate-embeddings — backfill embeddings for all chunks missing them
+ingestRouter.post('/generate-embeddings', async (req, res) => {
+  try {
+    // Find all chunks without embeddings
+    const { data: chunks, error: fetchErr } = await supabase
+      .from('document_chunks')
+      .select('id, content')
+      .is('embedding', null)
+      .order('created_at', { ascending: true })
+      .limit(500);
+
+    if (fetchErr) throw fetchErr;
+
+    if (!chunks || chunks.length === 0) {
+      return res.json({ message: 'All chunks already have embeddings', processed: 0 });
+    }
+
+    logger.info(`Generating embeddings for ${chunks.length} chunks`);
+    let successCount = 0;
+    let failCount = 0;
+
+    // Process in batches of 10
+    const BATCH = 10;
+    for (let i = 0; i < chunks.length; i += BATCH) {
+      const batch = chunks.slice(i, i + BATCH);
+
+      const results = await Promise.all(
+        batch.map(async (chunk) => {
+          try {
+            const { generateEmbedding } = await import('../services/rag.js');
+            const embedding = await generateEmbedding(chunk.content);
+            if (!embedding) return { id: chunk.id, success: false };
+
+            const { error: updateErr } = await supabase
+              .from('document_chunks')
+              .update({ embedding })
+              .eq('id', chunk.id);
+
+            if (updateErr) return { id: chunk.id, success: false };
+            return { id: chunk.id, success: true };
+          } catch {
+            return { id: chunk.id, success: false };
+          }
+        })
+      );
+
+      successCount += results.filter(r => r.success).length;
+      failCount += results.filter(r => !r.success).length;
+
+      // Rate limit pause between batches
+      if (i + BATCH < chunks.length) {
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    logger.info(`Embedding generation complete: ${successCount} success, ${failCount} failed`);
+    res.json({ message: 'Embedding generation complete', processed: successCount, failed: failCount, total: chunks.length });
+  } catch (error) {
+    logger.error('Embedding generation failed', { error: error.message });
+    res.status(500).json({ error: 'Embedding generation failed', details: error.message });
+  }
+});
+
 // DELETE /api/ingest/document/:id
 ingestRouter.delete('/document/:id', async (req, res) => {
   const { id } = req.params;
