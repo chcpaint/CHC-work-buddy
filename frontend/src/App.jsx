@@ -500,7 +500,7 @@ function VideoResultsRow({ media, onPlay, theme = "dark" }) {
 }
 
 // ─── Chat Message ─────────────────────────────────────────────
-function ChatMessage({ message, isUser, onPlayVideo, theme = "dark" }) {
+function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark" }) {
   const colors = themes[theme];
   return (
     <div style={{
@@ -542,10 +542,43 @@ function ChatMessage({ message, isUser, onPlayVideo, theme = "dark" }) {
         {message.content}
         {message.sources?.length > 0 && (
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${colors.border}` }}>
-            <div style={{ color: colors.textSecondary, fontSize: 10, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>📎 Sources</div>
+            <div style={{ color: colors.textSecondary, fontSize: 10, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>📎 Sources — tap to view full document</div>
             {message.sources.map((s, i) => (
-              <div key={i} style={{ color: colors.accentPrimary, fontSize: 11, marginBottom: 3 }}>
-                • {s.title} <span style={{ color: colors.textSecondary }}>({s.docType})</span>
+              <div
+                key={i}
+                onClick={() => onOpenDoc && onOpenDoc({ id: s.id, title: s.title, doc_type: s.docType, tab_slug: s.tabSlug, file_url: s.fileUrl })}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "8px 12px", marginBottom: 6,
+                  borderRadius: 10,
+                  background: `${colors.accentPrimary}08`,
+                  border: `1px solid ${colors.accentPrimary}25`,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = `${colors.accentPrimary}18`;
+                  e.currentTarget.style.borderColor = `${colors.accentPrimary}50`;
+                  e.currentTarget.style.transform = "translateX(4px)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = `${colors.accentPrimary}08`;
+                  e.currentTarget.style.borderColor = `${colors.accentPrimary}25`;
+                  e.currentTarget.style.transform = "translateX(0)";
+                }}
+              >
+                <span style={{ fontSize: 14 }}>
+                  {s.docType === "sds" ? "⚠️" : s.docType === "tech_sheet" ? "📊" : s.docType === "procedure" ? "📋" : s.docType === "checklist" ? "✅" : "📄"}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: colors.accentPrimary, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {s.title}
+                  </div>
+                  <div style={{ color: colors.textSecondary, fontSize: 10, marginTop: 1 }}>
+                    {s.docType?.replace("_", " ").toUpperCase()} {s.similarity ? `• ${s.similarity}% match` : ""}
+                  </div>
+                </div>
+                <span style={{ color: colors.accentPrimary, fontSize: 16, flexShrink: 0, opacity: 0.6 }}>→</span>
               </div>
             ))}
           </div>
@@ -1619,7 +1652,7 @@ export default function App() {
             <div style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 4 }}>
               {messages.map((msg, i) => (
                 <div key={i} style={{ animation: "fadeIn 0.3s ease" }}>
-                  <ChatMessage message={msg} isUser={msg.role === "user"} onPlayVideo={setMediaViewer} theme={theme} />
+                  <ChatMessage message={msg} isUser={msg.role === "user"} onPlayVideo={setMediaViewer} onOpenDoc={setDocViewer} theme={theme} />
                 </div>
               ))}
               {isLoading && (
