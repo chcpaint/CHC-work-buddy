@@ -25,7 +25,7 @@ documentsRouter.get('/', async (req, res) => {
   res.json({ documents: data, total: count });
 });
 
-// GET /api/documents/:id — Single document
+// GET /api/documents/:id — Single document with full content
 documentsRouter.get('/:id', async (req, res) => {
   const { data, error } = await supabase
     .from('documents')
@@ -35,5 +35,15 @@ documentsRouter.get('/:id', async (req, res) => {
     .single();
 
   if (error || !data) return res.status(404).json({ error: 'Document not found' });
-  res.json({ document: data });
+
+  // Also fetch the document chunks to reconstruct full content
+  const { data: chunks } = await supabase
+    .from('document_chunks')
+    .select('content, chunk_index')
+    .eq('document_id', req.params.id)
+    .order('chunk_index', { ascending: true });
+
+  const fullContent = chunks?.map(c => c.content).join('\n\n') || null;
+
+  res.json({ document: { ...data, full_content: fullContent } });
 });

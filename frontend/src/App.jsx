@@ -555,6 +555,154 @@ function ChatMessage({ message, isUser, onPlayVideo, theme = "dark" }) {
   );
 }
 
+// ─── Document Viewer ──────────────────────────────────────────
+function DocViewer({ doc, onClose, token, theme = "dark" }) {
+  const colors = themes[theme];
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!doc?.id) return;
+    fetch(`${API_BASE}/api/documents/${doc.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        setContent(data.document?.full_content || null);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [doc?.id, token]);
+
+  if (!doc) return null;
+
+  const typeColors = {
+    sds: "#ef4444", tech_sheet: "#8b5cf6", manual: "#3b82f6",
+    procedure: colors.accentSecondary, checklist: "#22c55e", other: colors.textSecondary,
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 1000,
+      background: "rgba(0,0,0,0.85)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      backdropFilter: "blur(12px)",
+      animation: "fadeIn 0.3s ease",
+    }} onClick={onClose}>
+      <div style={{
+        background: colors.surface,
+        border: `1px solid ${colors.border}`,
+        borderRadius: 16,
+        width: "min(90vw, 800px)",
+        maxHeight: "85vh",
+        display: "flex",
+        flexDirection: "column",
+        backdropFilter: "blur(20px)",
+        boxShadow: `0 25px 50px rgba(0,0,0,0.3), 0 0 0 1px ${colors.border}`,
+      }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ padding: "20px 24px 16px", borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 22 }}>
+                  {doc.doc_type === "sds" ? "⚠️" : doc.doc_type === "tech_sheet" ? "📊" : doc.doc_type === "procedure" ? "📋" : doc.doc_type === "checklist" ? "✅" : "📄"}
+                </span>
+                <h3 style={{ color: colors.textPrimary, margin: 0, fontSize: 18, fontWeight: 600 }}>{doc.title}</h3>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{
+                  padding: "3px 10px", borderRadius: 20,
+                  background: `${typeColors[doc.doc_type] || colors.textSecondary}15`,
+                  border: `1px solid ${typeColors[doc.doc_type] || colors.textSecondary}40`,
+                  color: typeColors[doc.doc_type] || colors.textSecondary,
+                  fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+                }}>
+                  {doc.doc_type?.replace("_", " ")}
+                </span>
+                {doc.tags?.length > 0 && doc.tags.slice(0, 4).map(tag => (
+                  <span key={tag} style={{
+                    padding: "3px 8px", borderRadius: 12,
+                    background: `${colors.accentPrimary}10`,
+                    color: colors.textSecondary,
+                    fontSize: 10, fontWeight: 500,
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button onClick={onClose} style={{
+              background: "none", border: "none", color: colors.textSecondary,
+              fontSize: 24, cursor: "pointer", transition: "color 0.2s", flexShrink: 0,
+              padding: "0 4px",
+            }}
+              onMouseEnter={e => e.target.style.color = colors.accentSecondary}
+              onMouseLeave={e => e.target.style.color = colors.textSecondary}
+            >✕</button>
+          </div>
+          {doc.description && (
+            <p style={{ color: colors.textSecondary, fontSize: 12, margin: "10px 0 0", lineHeight: 1.6 }}>{doc.description}</p>
+          )}
+        </div>
+
+        {/* Content body */}
+        <div style={{
+          padding: 24,
+          overflow: "auto",
+          flex: 1,
+          minHeight: 0,
+        }}>
+          {loading ? (
+            <div style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 24, marginBottom: 12, animation: "pulse 1.5s ease-in-out infinite" }}>⏳</div>
+              Loading document...
+            </div>
+          ) : content ? (
+            <div style={{
+              color: colors.textPrimary,
+              fontSize: 14,
+              lineHeight: 1.8,
+              whiteSpace: "pre-wrap",
+              fontFamily: "'Barlow', sans-serif",
+            }}>
+              {content}
+            </div>
+          ) : (
+            <div style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
+              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>No content preview available</div>
+              {doc.file_url && (
+                <a href={doc.file_url} target="_blank" rel="noreferrer" style={{
+                  display: "inline-block", marginTop: 8,
+                  padding: "8px 20px", borderRadius: 8,
+                  background: `${colors.accentPrimary}20`,
+                  color: colors.accentPrimary,
+                  fontSize: 13, fontWeight: 600, textDecoration: "none",
+                  border: `1px solid ${colors.accentPrimary}40`,
+                }}>
+                  Open Original File ↗
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {doc.file_url && content && (
+          <div style={{ padding: "12px 24px", borderTop: `1px solid ${colors.border}`, flexShrink: 0 }}>
+            <a href={doc.file_url} target="_blank" rel="noreferrer" style={{
+              color: colors.accentPrimary, fontSize: 12, textDecoration: "none", fontWeight: 500,
+            }}>
+              Open original file ↗
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Media Viewer ─────────────────────────────────────────────
 function getEmbedUrl(fileUrl) {
   if (!fileUrl) return null;
@@ -632,6 +780,7 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [mediaViewer, setMediaViewer] = useState(null);
+  const [docViewer, setDocViewer] = useState(null);
   const [tabContent, setTabContent] = useState({});
   const [contentLoading, setContentLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -1390,7 +1539,7 @@ export default function App() {
                 <div key={doc.id || i} style={{ animation: `slideUp 0.4s ease`, animationDelay: `${i * 50}ms`, animationFillMode: "both" }}>
                   <DocCard
                     doc={doc}
-                    onClick={() => doc.file_url && setMediaViewer(doc)}
+                    onClick={() => setDocViewer(doc)}
                     theme={theme}
                   />
                 </div>
@@ -1543,6 +1692,9 @@ export default function App() {
           </aside>
         )}
       </div>
+
+      {/* Document Viewer Modal */}
+      {docViewer && <DocViewer doc={docViewer} onClose={() => setDocViewer(null)} token={token} theme={theme} />}
 
       {/* Media Viewer Modal */}
       {mediaViewer && <MediaViewer item={mediaViewer} onClose={() => setMediaViewer(null)} theme={theme} />}
