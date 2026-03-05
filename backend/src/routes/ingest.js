@@ -6,6 +6,7 @@ import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { supabase } from '../index.js';
 import { ingestDocument } from '../services/rag.js';
+import { autoTagDocument, autoTagMedia } from '../services/autotag.js';
 import { requireRole } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 
@@ -64,6 +65,12 @@ ingestRouter.post('/document', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Could not extract text from file' });
     }
 
+    // 1b. Auto-tag with AI (runs in parallel with upload, non-blocking)
+    const autoTagPromise = autoTagDocument(rawText, { title, docType }).catch(err => {
+      logger.warn('Auto-tag skipped', { error: err.message });
+      return null;
+    });
+
     // 2. Upload file to Supabase Storage
     const filePath = `documents/${tabSlug || 'general'}/${Date.now()}-${originalname}`;
     const { data: storageData, error: storageError } = await supabase.storage
@@ -76,26 +83,37 @@ ingestRouter.post('/document', upload.single('file'), async (req, res) => {
       .from('bodyshop-docs')
       .getPublicUrl(filePath);
 
-    // 3. Create document record
+    // 3. Wait for auto-tags and merge with manual input
+    const autoTags = await autoTagPromise;
+    const manualTags = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const mergedTags = [...new Set([...manualTags, ...(autoTags?.tags || [])])];
+
     const { data: docRecord, error: docError } = await supabase
       .from('documents')
       .insert({
         title,
-        description,
-        doc_type: docType,
-        tab_slug: tabSlug || null,
+        description: description || autoTags?.description || null,
+        doc_type: docType || autoTags?.suggestedDocType || 'other',
+        tab_slug: tabSlug || autoTags?.suggestedTab || null,
         language: language || 'en',
         file_url: publicUrl,
         file_name: originalname,
         file_size_bytes: size,
         mime_type: mimetype,
-        tags: tags ? tags.split(',').map(t => t.trim()) : [],
+        tags: mergedTags,
         uploaded_by: userId,
       })
       .select()
       .single();
 
     if (docError) throw docError;
+
+    logger.info('Document created with auto-tags', {
+      documentId: docRecord.id,
+      manualTags: manualTags.length,
+      autoTags: autoTags?.tags?.length || 0,
+      suggestedTab: autoTags?.suggestedTab,
+    });
 
     // 4. Start embedding pipeline (async - return immediately)
     res.json({
@@ -153,18 +171,27 @@ ingestRouter.post('/media', upload.single('file'), async (req, res) => {
       fileUrl = publicUrl;
     }
 
+    // Auto-tag media with AI
+    const autoTags = await autoTagMedia({
+      title, description,
+      transcript: req.body.transcript,
+    }).catch(() => null);
+
+    const manualTags = req.body.tags ? req.body.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+    const manualKeywords = req.body.keywords ? req.body.keywords.split(',').map(k => k.trim().toLowerCase()).filter(Boolean) : [];
+
     const { data, error } = await supabase
       .from('media_items')
       .insert({
         title,
         description,
         media_type: mediaType,
-        tab_slug: tabSlug || null,
+        tab_slug: tabSlug || autoTags?.suggestedTab || null,
         language: language || 'en',
         file_url: fileUrl,
         thumbnail_url: thumbnailUrl || null,
-        tags:       req.body.tags       ? req.body.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)       : [],
-        keywords:   req.body.keywords   ? req.body.keywords.split(',').map(k => k.trim().toLowerCase()).filter(Boolean)   : [],
+        tags: [...new Set([...manualTags, ...(autoTags?.tags || [])])],
+        keywords: [...new Set([...manualKeywords, ...(autoTags?.keywords || [])])],
         transcript: req.body.transcript || null,
         uploaded_by: userId,
       })
@@ -172,6 +199,7 @@ ingestRouter.post('/media', upload.single('file'), async (req, res) => {
       .single();
 
     if (error) throw error;
+    logger.info('Media created with auto-tags', { mediaId: data.id, autoTags: autoTags?.tags?.length || 0 });
     res.json({ success: true, media: data });
 
   } catch (error) {
