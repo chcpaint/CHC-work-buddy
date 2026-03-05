@@ -1050,8 +1050,13 @@ export default function App() {
       authFetch(`${API_BASE}/api/learning/guides`).then(r => r.json()),
       authFetch(`${API_BASE}/api/learning/quizzes`).then(r => r.json()),
     ]).then(([g, q]) => {
-      setLearningGuides(g.guides || []);
-      setLearningQuizzes(q.quizzes || []);
+      const mapFields = (obj, fields) => {
+        const out = { ...obj };
+        for (const f of fields) out[f] = { en: obj[`${f}_en`] || "", fr: obj[`${f}_fr`] || "", es: obj[`${f}_es`] || "" };
+        return out;
+      };
+      setLearningGuides((g.guides || []).map(x => mapFields(x, ["title", "description"])));
+      setLearningQuizzes((q.quizzes || []).map(x => mapFields(x, ["title", "description"])));
       setLearningLoading(false);
     }).catch(() => setLearningLoading(false));
   }, [activeTab, token]);
@@ -1197,18 +1202,38 @@ export default function App() {
     setGuideHistory(prev => prev.slice(0, -1));
   };
 
+  // Helper: map flat i18n DB fields (title_en, title_fr) → nested { title: {en, fr, es} }
+  const mapI18n = (obj, fields) => {
+    const out = { ...obj };
+    for (const f of fields) {
+      out[f] = { en: obj[`${f}_en`] || "", fr: obj[`${f}_fr`] || "", es: obj[`${f}_es`] || "" };
+    }
+    return out;
+  };
+
   const openQuiz = async (slug) => {
     try {
       const res = await authFetch(`${API_BASE}/api/learning/quizzes/${slug}`);
       const data = await res.json();
-      setActiveQuiz(data.quiz);
-      setQuizQuestions(data.questions || []);
+      const quiz = mapI18n(data.quiz || {}, ["title", "description"]);
+      const questions = (data.questions || []).map(q => {
+        const mapped = mapI18n(q, ["question_text", "explanation"]);
+        mapped.text = mapped.question_text; // frontend expects .text
+        mapped.answers = (q.answers || []).map(a => {
+          const ma = mapI18n(a, ["answer_text"]);
+          ma.text = ma.answer_text; // frontend expects .text
+          return ma;
+        });
+        return mapped;
+      });
+      setActiveQuiz(quiz);
+      setQuizQuestions(questions);
       setQuizCurrentQ(0);
       setQuizAnswers({});
       setQuizResults(null);
       setLearningView("quiz");
-    } catch {
-      console.error("Failed to open quiz:", slug);
+    } catch (err) {
+      console.error("Failed to open quiz:", slug, err);
     }
   };
 
@@ -1219,7 +1244,9 @@ export default function App() {
       const res = await authFetch(`${API_BASE}/api/learning/quizzes/${activeQuiz.id}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: quizAnswers }),
+        body: JSON.stringify({ answers: Object.fromEntries(
+          Object.entries(quizAnswers).map(([idx, ansId]) => [quizQuestions[idx]?.id, ansId])
+        ) }),
       });
       const data = await res.json();
       setQuizResults(data);
@@ -2152,12 +2179,15 @@ export default function App() {
 
                   {quizResults === null ? (
                     // Taking quiz
+                    quizQuestions.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: 40, color: colors.textSecondary }}>Loading questions...</div>
+                    ) : (
                     <div>
                       {/* Progress bar */}
                       <div style={{ marginBottom: 24 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12, color: colors.textSecondary }}>
                           <span>Question {quizCurrentQ + 1} of {quizQuestions.length}</span>
-                          <span>{Math.round((quizCurrentQ / quizQuestions.length) * 100)}%</span>
+                          <span>{quizQuestions.length > 0 ? Math.round((quizCurrentQ / quizQuestions.length) * 100) : 0}%</span>
                         </div>
                         <div style={{ height: 8, background: colors.surfaceLight, borderRadius: 4, overflow: "hidden" }}>
                           <div
@@ -2305,6 +2335,7 @@ export default function App() {
                         </div>
                       )}
                     </div>
+                    )
                   ) : (
                     // Quiz results
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
