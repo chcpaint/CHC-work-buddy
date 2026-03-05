@@ -777,7 +777,7 @@ function UserManagement({ token, onToast }) {
 
 // ─── SECTION: Settings ────────────────────────────────────────
 function Settings({ token, onToast }) {
-  const [form, setForm] = useState({ shopName: "BodyShop AI", welcomeMessage: "Hi! I'm Max, your BodyShop AI assistant.", defaultLanguage: "en" });
+  const [form, setForm] = useState({ shopName: "Body Shop Wiz", welcomeMessage: "Hi! I'm Max, your Body Shop Wiz assistant.", defaultLanguage: "en" });
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   return (
@@ -916,7 +916,7 @@ export default function AdminPanel() {
             <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 22, letterSpacing: 3, textTransform: "uppercase", color: "#f1f5f9", margin: 0 }}>
               ADMIN <span style={{ color: "#f97316" }}>PANEL</span>
             </h1>
-            <p style={{ color: "#475569", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", marginTop: 5 }}>BodyShop AI · Restricted Access</p>
+            <p style={{ color: "#475569", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", marginTop: 5 }}>Body Shop Wiz · Restricted Access</p>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

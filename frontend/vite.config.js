@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'BodyShop AI Assistant',
-        short_name: 'BodyShop AI',
+        name: 'Body Shop Wiz',
+        short_name: 'Body Shop Wiz',
         description: 'Professional AI assistant for body shop technicians',
         theme_color: '#f97316',
         background_color: '#080e1a',

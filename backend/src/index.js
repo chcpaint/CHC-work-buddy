@@ -1,4 +1,4 @@
-// BodyShop AI — Backend API Server
+// Body Shop Wiz — Backend API Server
 // Node.js + Express | Railway deployment
 
 import express from 'express';
@@ -181,7 +181,7 @@ app.use((err, req, res, next) => {
 
 // ─── Start Server ──────────────────────────────────────────────
 app.listen(PORT, () => {
-  logger.info(`BodyShop AI API running on port ${PORT}`);
+  logger.info(`Body Shop Wiz API running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
 });
 
