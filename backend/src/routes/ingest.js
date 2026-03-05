@@ -150,34 +150,109 @@ ingestRouter.post('/document', upload.single('file'), async (req, res) => {
   }
 });
 
-// POST /api/ingest/media — Upload video or slideshow
+// Helper: extract YouTube video ID from various URL formats
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const match = url.match(p);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+// Helper: extract Vimeo video ID from various URL formats
+function extractVimeoId(url) {
+  if (!url) return null;
+  const patterns = [
+    /vimeo\.com\/(\d+)/,
+    /vimeo\.com\/video\/(\d+)/,
+    /player\.vimeo\.com\/video\/(\d+)/,
+  ];
+  for (const p of patterns) {
+    const match = url.match(p);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+// POST /api/ingest/media — Upload video/slideshow or add YouTube link
 ingestRouter.post('/media', upload.single('file'), async (req, res) => {
   const { title, description, mediaType, tabSlug, language } = req.body;
   const userId = req.user.id;
 
-  if (!req.file && !req.body.fileUrl) {
-    return res.status(400).json({ error: 'No file or URL provided' });
+  if (!req.file && !req.body.fileUrl && !req.body.youtubeUrl && !req.body.vimeoUrl) {
+    return res.status(400).json({ error: 'No file, URL, YouTube, or Vimeo link provided' });
   }
 
   try {
-    let fileUrl = req.body.fileUrl;
-    let thumbnailUrl = req.body.thumbnailUrl;
+    const normalizedTabSlug = (tabSlug && tabSlug !== '' && tabSlug !== '-- All Tabs --') ? tabSlug : null;
+    let fileUrl = req.body.fileUrl || null;
+    let thumbnailUrl = req.body.thumbnailUrl || null;
+    let videoSource = null; // 'youtube', 'vimeo', or null
 
-    if (req.file) {
+    // Handle YouTube URL
+    if (req.body.youtubeUrl) {
+      const ytId = extractYouTubeId(req.body.youtubeUrl);
+      if (ytId) {
+        fileUrl = `https://www.youtube.com/watch?v=${ytId}`;
+        thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        videoSource = 'youtube';
+      } else {
+        fileUrl = req.body.youtubeUrl;
+      }
+    }
+
+    // Handle Vimeo URL
+    if (req.body.vimeoUrl) {
+      const vimeoId = extractVimeoId(req.body.vimeoUrl);
+      if (vimeoId) {
+        fileUrl = `https://vimeo.com/${vimeoId}`;
+        thumbnailUrl = `https://vumbnail.com/${vimeoId}.jpg`;
+        videoSource = 'vimeo';
+      } else {
+        fileUrl = req.body.vimeoUrl;
+      }
+    }
+
+    // Also auto-detect YouTube/Vimeo from generic fileUrl
+    if (fileUrl && !videoSource) {
+      const ytId = extractYouTubeId(fileUrl);
+      if (ytId) {
+        fileUrl = `https://www.youtube.com/watch?v=${ytId}`;
+        thumbnailUrl = thumbnailUrl || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        videoSource = 'youtube';
+      } else {
+        const vimeoId = extractVimeoId(fileUrl);
+        if (vimeoId) {
+          fileUrl = `https://vimeo.com/${vimeoId}`;
+          thumbnailUrl = thumbnailUrl || `https://vumbnail.com/${vimeoId}.jpg`;
+          videoSource = 'vimeo';
+        }
+      }
+    }
+
+    // Handle file upload (non-fatal if storage fails)
+    if (req.file && !fileUrl) {
       const { buffer, originalname, mimetype } = req.file;
-      const filePath = `media/${tabSlug || 'general'}/${Date.now()}-${originalname}`;
-      
-      const { error: storageError } = await supabase.storage
-        .from('bodyshop-media')
-        .upload(filePath, buffer, { contentType: mimetype });
+      const filePath = `media/${normalizedTabSlug || 'general'}/${Date.now()}-${originalname}`;
+      try {
+        const { error: storageError } = await supabase.storage
+          .from('bodyshop-media')
+          .upload(filePath, buffer, { contentType: mimetype });
 
-      if (storageError) throw storageError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('bodyshop-media')
-        .getPublicUrl(filePath);
-
-      fileUrl = publicUrl;
+        if (!storageError) {
+          const { data } = supabase.storage.from('bodyshop-media').getPublicUrl(filePath);
+          fileUrl = data?.publicUrl || null;
+        } else {
+          logger.warn('Media storage upload failed', { error: storageError.message });
+        }
+      } catch (storageErr) {
+        logger.warn('Media storage exception', { error: storageErr.message });
+      }
     }
 
     // Auto-tag media with AI
@@ -189,31 +264,45 @@ ingestRouter.post('/media', upload.single('file'), async (req, res) => {
     const manualTags = req.body.tags ? req.body.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
     const manualKeywords = req.body.keywords ? req.body.keywords.split(',').map(k => k.trim().toLowerCase()).filter(Boolean) : [];
 
+    const insertPayload = {
+      title,
+      description,
+      media_type: mediaType || 'video',
+      tab_slug: normalizedTabSlug || autoTags?.suggestedTab || null,
+      language: language || 'en',
+      file_url: fileUrl,
+      thumbnail_url: thumbnailUrl,
+      tags: [...new Set([...manualTags, ...(autoTags?.tags || [])])],
+      keywords: [...new Set([...manualKeywords, ...(autoTags?.keywords || [])])],
+      transcript: req.body.transcript || null,
+      uploaded_by: userId,
+    };
+    // Store video source if the column exists (youtube/vimeo)
+    if (videoSource) insertPayload.video_source = videoSource;
+
     const { data, error } = await supabase
       .from('media_items')
-      .insert({
-        title,
-        description,
-        media_type: mediaType,
-        tab_slug: tabSlug || autoTags?.suggestedTab || null,
-        language: language || 'en',
-        file_url: fileUrl,
-        thumbnail_url: thumbnailUrl || null,
-        tags: [...new Set([...manualTags, ...(autoTags?.tags || [])])],
-        keywords: [...new Set([...manualKeywords, ...(autoTags?.keywords || [])])],
-        transcript: req.body.transcript || null,
-        uploaded_by: userId,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (error) throw error;
-    logger.info('Media created with auto-tags', { mediaId: data.id, autoTags: autoTags?.tags?.length || 0 });
+    if (error) {
+      // If video_source column doesn't exist yet, retry without it
+      if (error.message?.includes('video_source')) {
+        delete insertPayload.video_source;
+        const retry = await supabase.from('media_items').insert(insertPayload).select().single();
+        if (retry.error) throw retry.error;
+        logger.info('Media created (without video_source column)', { mediaId: retry.data.id, videoSource });
+        return res.json({ success: true, media: retry.data });
+      }
+      throw error;
+    }
+    logger.info('Media created', { mediaId: data.id, videoSource, autoTags: autoTags?.tags?.length || 0 });
     res.json({ success: true, media: data });
 
   } catch (error) {
-    logger.error('Media ingest error', { error: error.message });
-    res.status(500).json({ error: 'Failed to upload media' });
+    logger.error('Media ingest error', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Failed to upload media', details: error.message });
   }
 });
 

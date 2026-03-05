@@ -556,9 +556,21 @@ function ChatMessage({ message, isUser, onPlayVideo, theme = "dark" }) {
 }
 
 // ─── Media Viewer ─────────────────────────────────────────────
+function getEmbedUrl(fileUrl) {
+  if (!fileUrl) return null;
+  // YouTube
+  const ytMatch = fileUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return { type: "youtube", embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1` };
+  // Vimeo
+  const vimeoMatch = fileUrl.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) return { type: "vimeo", embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}?title=0&byline=0&portrait=0` };
+  return null;
+}
+
 function MediaViewer({ item, onClose, theme = "dark" }) {
   const colors = themes[theme];
   if (!item) return null;
+  const embed = getEmbedUrl(item.file_url);
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 1000,
@@ -582,7 +594,17 @@ function MediaViewer({ item, onClose, theme = "dark" }) {
           <h3 style={{ color: colors.textPrimary, margin: 0, fontSize: 18, fontWeight: 600 }}>{item.title}</h3>
           <button onClick={onClose} style={{ background: "none", border: "none", color: colors.textSecondary, fontSize: 24, cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={(e) => e.target.style.color = colors.accentSecondary} onMouseLeave={(e) => e.target.style.color = colors.textSecondary}>✕</button>
         </div>
-        {item.media_type === "video" ? (
+        {embed ? (
+          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: 12, boxShadow: `0 8px 24px rgba(0,0,0,0.2)` }}>
+            <iframe
+              src={embed.embedUrl}
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+              title={item.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : item.media_type === "video" ? (
           <video controls style={{ width: "100%", borderRadius: 12, boxShadow: `0 8px 24px rgba(0,0,0,0.2)` }} src={item.file_url}>
             Your browser does not support video.
           </video>

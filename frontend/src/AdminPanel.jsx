@@ -536,16 +536,21 @@ function MediaManager({ token, onToast, refreshKey }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const isYouTubeUrl = (url) => /(?:youtube\.com|youtu\.be)/i.test(url || "");
+  const isVimeoUrl = (url) => /vimeo\.com/i.test(url || "");
+  const detectedPlatform = isYouTubeUrl(form.fileUrl) ? "youtube" : isVimeoUrl(form.fileUrl) ? "vimeo" : null;
 
   const handleSubmit = async () => {
     if (!form.title) { onToast("Title is required", "error"); return; }
     if (!file && !form.fileUrl) { onToast("Provide a file or URL", "error"); return; }
     setUploading(true);
     try {
-      // Build payload — route YouTube URLs to the youtubeUrl field
+      // Build payload — route YouTube/Vimeo URLs to dedicated fields
       const payload = { ...form };
       if (!file && isYouTubeUrl(form.fileUrl)) {
         payload.youtubeUrl = form.fileUrl;
+        delete payload.fileUrl;
+      } else if (!file && isVimeoUrl(form.fileUrl)) {
+        payload.vimeoUrl = form.fileUrl;
         delete payload.fileUrl;
       }
 
@@ -604,12 +609,18 @@ function MediaManager({ token, onToast, refreshKey }) {
 
           {!file && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <Input label="OR — Paste a YouTube link or external video URL" value={form.fileUrl}
-                onChange={e => set("fileUrl", e.target.value)} placeholder="https://www.youtube.com/watch?v=... or any video URL" />
-              {isYouTubeUrl(form.fileUrl) && (
+              <Input label="OR — Paste a YouTube or Vimeo link" value={form.fileUrl}
+                onChange={e => set("fileUrl", e.target.value)} placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..." />
+              {detectedPlatform === "youtube" && (
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8 }}>
                   <span style={{ fontSize: 18 }}>▶️</span>
-                  <span style={{ color: "#f87171", fontSize: 12, fontWeight: 600 }}>YouTube detected — thumbnail will be generated automatically</span>
+                  <span style={{ color: "#f87171", fontSize: 12, fontWeight: 600 }}>YouTube detected — thumbnail auto-generated</span>
+                </div>
+              )}
+              {detectedPlatform === "vimeo" && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "rgba(0,173,239,0.08)", border: "1px solid rgba(0,173,239,0.2)", borderRadius: 8 }}>
+                  <span style={{ fontSize: 18 }}>▶️</span>
+                  <span style={{ color: "#00adef", fontSize: 12, fontWeight: 600 }}>Vimeo detected — will embed with Vimeo player</span>
                 </div>
               )}
             </div>
