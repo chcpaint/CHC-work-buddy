@@ -34,12 +34,15 @@ agentRouter.post('/query', async (req, res) => {
 
   if (!message?.trim()) return res.status(400).json({ error: 'Message is required' });
 
+  // Set SSE headers immediately so error handler can always write
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
   try {
     // Check if AI client is available
     if (!anthropic) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
       res.write(`data: ${JSON.stringify({ type: 'text', content: 'AI service is not configured yet. Please ask your administrator to set the ANTHROPIC_API_KEY environment variable.' })}\n\n`);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
       return res.end();
@@ -92,11 +95,6 @@ agentRouter.post('/query', async (req, res) => {
       { role: 'user', content: `${message}\n\n<context>\n${contextText}${videoHint}\n</context>` },
     ];
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-
     // Send video cards before text starts streaming
     if (mediaResults.length > 0) {
       res.write(`data: ${JSON.stringify({ type: 'media', media: mediaResults })}\n\n`);
@@ -132,9 +130,14 @@ agentRouter.post('/query', async (req, res) => {
     saveToSession(userId, sessionId, message, fullResponse, lang, docSources, mediaResults, voiceInput);
 
   } catch (error) {
-    logger.error('Agent query error', { error: error.message, userId });
-    res.write(`data: ${JSON.stringify({ type: 'error', message: 'An error occurred. Please try again.' })}\n\n`);
-    res.end();
+    logger.error('Agent query error', { error: error.message, stack: error.stack, userId });
+    try {
+      res.write(`data: ${JSON.stringify({ type: 'text', content: 'Sorry, something went wrong processing your question. Please try again.' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+      res.end();
+    } catch (writeErr) {
+      logger.error('Failed to write error response', { error: writeErr.message });
+    }
   }
 });
 
