@@ -24,10 +24,23 @@ const VIDEO_INTENT_PATTERNS = [
   /\b(show\s+me|play|watch|video|videos|tutorial|how\s+to|demonstrate|demonstration|training\s+video|walkthrough|see\s+how|let\s+me\s+see)\b/i,
   /\b(montrez?[-\s]moi|vidéo|tutoriel|comment\s+faire|démonstration|voir\s+comment)\b/i,
   /\b(muéstrame|muéstreme|video|vídeo|tutorial|cómo\s+se\s+hace|cómo\s+usar|ver\s+cómo|demostración)\b/i,
+  /\b(media|training|clip|recording)\b/i,
+];
+
+// Detect when user is asking "what videos/media do you have" (inventory question)
+const MEDIA_INVENTORY_PATTERNS = [
+  /\b(what|which|list|any|all)\b.*\b(video|videos|media|training|tutorial|clip)\b/i,
+  /\b(video|videos|media|training|tutorial)\b.*\b(do\s+you\s+have|available|exist|are\s+there|got|library)\b/i,
+  /\b(do\s+you\s+have)\b.*\b(video|videos|media|training|tutorial)\b/i,
+  /\b(show|see|view|browse)\b.*\b(all|every|library|collection)\b/i,
 ];
 
 function hasVideoIntent(message) {
   return VIDEO_INTENT_PATTERNS.some(p => p.test(message));
+}
+
+function hasMediaInventoryIntent(message) {
+  return MEDIA_INVENTORY_PATTERNS.some(p => p.test(message));
 }
 
 function extractVideoSearchTerms(message) {
@@ -60,13 +73,17 @@ agentRouter.post('/query', async (req, res) => {
 
     const lang = language || await detectLanguage(message) || 'en';
     const wantsVideo = hasVideoIntent(message);
+    const wantsMediaInventory = hasMediaInventoryIntent(message);
     const wantsTranslation = hasTranslationIntent(message) || lang !== 'en';
     const videoSearchTerms = wantsVideo ? extractVideoSearchTerms(message) : null;
 
     // Run embedding search, keyword search (tab-filtered + cross-tab), and media search in parallel
+    // For inventory questions ("what videos do you have"), fetch ALL media instead of searching
     const [embedding, mediaResults, tabKeywordResults, allKeywordResults] = await Promise.all([
       openai ? generateEmbedding(message) : Promise.resolve(null),
-      wantsVideo ? searchMedia(videoSearchTerms || message, tabSlug, lang) : Promise.resolve([]),
+      wantsMediaInventory
+        ? getAllMedia(tabSlug)
+        : (wantsVideo ? searchMedia(videoSearchTerms || message, tabSlug, null) : Promise.resolve([])),
       // Tab-filtered keyword search
       supabase.rpc('search_documents', {
         search_query: message, tab_filter: tabSlug || null, result_limit: 6,
@@ -96,6 +113,9 @@ agentRouter.post('/query', async (req, res) => {
     logger.info('Search results', {
       query: message.slice(0, 80),
       tabSlug,
+      wantsVideo,
+      wantsMediaInventory,
+      mediaHits: mediaResults.length,
       embeddingGenerated: !!embedding,
       tabKeywordHits: tabKeywordResults.length,
       crossTabKeywordHits: allKeywordResults.length,
@@ -184,9 +204,13 @@ agentRouter.post('/query', async (req, res) => {
 
     const videoHint = mediaResults.length > 0
       ? `\n\n<available_videos>\n${mediaResults.map((v, i) =>
-          `Video ${i + 1}: "${v.title}" — Tags: ${(v.tags || []).join(', ')}`
-        ).join('\n')}\n</available_videos>\nRelevant training videos have been found and will be shown to the user automatically. Briefly acknowledge them in your response.`
-      : '';
+          `Video ${i + 1}: "${v.title}" — Tags: ${(v.tags || []).join(', ')} — Tab: ${v.tab_slug || 'all'}`
+        ).join('\n')}\n</available_videos>\n${wantsMediaInventory
+          ? 'The user is asking about what videos/media are available. List ALL the videos shown above with their titles and brief descriptions. The video cards are being shown to the user automatically.'
+          : 'Relevant training videos have been found and will be shown to the user automatically. Briefly acknowledge them in your response.'}`
+      : (wantsVideo || wantsMediaInventory
+        ? '\n\nNo training videos or media have been uploaded to the library yet.'
+        : '');
 
     // Translation hint — tell Max to translate the full document content
     const langNames = { es: 'Spanish', fr: 'French', en: 'English' };
@@ -301,6 +325,23 @@ agentRouter.get('/sessions', async (req, res) => {
   }
 });
 
+// Fetch ALL active media (for inventory questions like "what videos do you have")
+async function getAllMedia(tabSlug, limit = 20) {
+  try {
+    let query = supabase.from('media_items').select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (tabSlug) query = query.eq('tab_slug', tabSlug);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    logger.warn('getAllMedia error', { err: err.message });
+    return [];
+  }
+}
+
 async function searchMedia(query, tabSlug, language, mediaType, limit = 8) {
   try {
     const { data, error } = await supabase.rpc('search_media', {
@@ -309,12 +350,34 @@ async function searchMedia(query, tabSlug, language, mediaType, limit = 8) {
       result_limit: limit,
     });
     if (error) throw error;
+    // If RPC returns nothing, try without language filter (language mismatch is common)
+    if ((!data || data.length === 0) && language) {
+      const { data: noLangData } = await supabase.rpc('search_media', {
+        search_query: query, tab_filter: tabSlug || null,
+        media_type_filter: mediaType || null, language_filter: null,
+        result_limit: limit,
+      });
+      if (noLangData && noLangData.length > 0) return noLangData;
+    }
     return data || [];
   } catch (err) {
     logger.warn('search_media RPC fallback', { err: err.message });
-    const { data: fallback } = await supabase.from('media_items').select('*')
-      .eq('is_active', true).or(`title.ilike.%${query}%,description.ilike.%${query}%`).limit(limit);
-    return fallback || [];
+    // Broader fallback — try ILIKE on title/description/tags per word
+    try {
+      const words = query.toLowerCase().split(/\s+/).filter(w => w.length >= 3);
+      let fb = supabase.from('media_items').select('*').eq('is_active', true).limit(limit);
+      if (words.length > 0) {
+        const orClauses = words.map(w => `title.ilike.%${w}%,description.ilike.%${w}%`).join(',');
+        fb = fb.or(orClauses);
+      }
+      const { data: fallback } = await fb;
+      return fallback || [];
+    } catch (e2) {
+      // Last resort — just return all media
+      const { data: all } = await supabase.from('media_items').select('*')
+        .eq('is_active', true).limit(limit);
+      return all || [];
+    }
   }
 }
 
