@@ -117,7 +117,7 @@ export async function matchDocuments(queryEmbedding, options = {}) {
   const {
     tabFilter = null,
     matchCount = 8,
-    threshold = 0.65,
+    threshold = 0.40,
   } = options;
 
   try {

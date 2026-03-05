@@ -52,25 +52,62 @@ agentRouter.post('/query', async (req, res) => {
     const wantsVideo = hasVideoIntent(message);
     const videoSearchTerms = wantsVideo ? extractVideoSearchTerms(message) : null;
 
-    // Only run embedding search if OpenAI is configured
-    const [embedding, mediaResults] = await Promise.all([
+    // Run embedding search, keyword search, and media search in parallel
+    const [embedding, mediaResults, keywordResults] = await Promise.all([
       openai ? generateEmbedding(message) : Promise.resolve(null),
       wantsVideo ? searchMedia(videoSearchTerms || message, tabSlug, lang) : Promise.resolve([]),
+      supabase.rpc('search_documents', {
+        search_query: message, tab_filter: tabSlug || null, result_limit: 6,
+      }).then(r => r.data || []).catch(e => {
+        logger.warn('Keyword search failed (non-fatal)', { error: e.message });
+        return [];
+      }),
     ]);
 
     const relevantChunks = embedding ? await matchDocuments(embedding, {
-      tabFilter: tabSlug, matchCount: 6, threshold: 0.60,
+      tabFilter: tabSlug, matchCount: 8, threshold: 0.45,
     }) : [];
 
-    let keywordResults = [];
-    try {
-      const { data } = await supabase.rpc('search_documents', {
-        search_query: message, tab_filter: tabSlug || null, result_limit: 4,
-      });
-      keywordResults = data || [];
-    } catch (e) {
-      logger.warn('Keyword search failed (non-fatal)', { error: e.message });
+    // If keyword search found documents, also fetch their chunks for context
+    let keywordChunks = [];
+    if (keywordResults.length > 0) {
+      const docIds = keywordResults.map(r => r.id);
+      try {
+        const { data: extraChunks } = await supabase
+          .from('document_chunks')
+          .select('content, document_id, chunk_index')
+          .in('document_id', docIds)
+          .order('chunk_index', { ascending: true })
+          .limit(12);
+        keywordChunks = (extraChunks || []).map(c => {
+          const parentDoc = keywordResults.find(d => d.id === c.document_id);
+          return {
+            content: c.content,
+            document_id: c.document_id,
+            title: parentDoc?.title || 'Unknown',
+            doc_type: parentDoc?.doc_type || 'other',
+            tab_slug: parentDoc?.tab_slug,
+            file_url: parentDoc?.file_url,
+            similarity: parentDoc?.rank || 0.5,
+          };
+        });
+      } catch (e) {
+        logger.warn('Keyword chunk fetch failed (non-fatal)', { error: e.message });
+      }
     }
+
+    // Merge vector chunks with keyword chunks, deduplicate by document_id + chunk content
+    const seen = new Set();
+    const allChunks = [];
+    for (const chunk of [...relevantChunks, ...keywordChunks]) {
+      const key = `${chunk.document_id}-${chunk.content?.slice(0, 50)}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        allChunks.push(chunk);
+      }
+    }
+    // Replace relevantChunks reference for downstream use
+    const mergedChunks = allChunks.slice(0, 10);
 
     let conversationHistory = [];
     if (sessionId) {
@@ -80,9 +117,11 @@ agentRouter.post('/query', async (req, res) => {
       conversationHistory = (msgs || []).map(m => ({ role: m.role, content: m.content }));
     }
 
-    const contextText = relevantChunks.length > 0
-      ? relevantChunks.map((c, i) => `[Source ${i + 1}: ${c.title} (${c.doc_type?.toUpperCase()})]\n${c.content}`).join('\n\n---\n\n')
-      : 'No specific documents found.';
+    const contextText = mergedChunks.length > 0
+      ? mergedChunks.map((c, i) => `[Source ${i + 1}: ${c.title} (${c.doc_type?.toUpperCase()})]\n${c.content}`).join('\n\n---\n\n')
+      : (keywordResults.length > 0
+        ? keywordResults.map((d, i) => `[Source ${i + 1}: ${d.title} (${d.doc_type?.toUpperCase()})]\n${d.description || 'No description available.'}`).join('\n\n---\n\n')
+        : 'No specific documents found.');
 
     const videoHint = mediaResults.length > 0
       ? `\n\n<available_videos>\n${mediaResults.map((v, i) =>
@@ -115,10 +154,25 @@ agentRouter.post('/query', async (req, res) => {
 
     await stream.finalMessage();
 
-    const docSources = relevantChunks.slice(0, 3).map(c => ({
-      id: c.document_id, title: c.title, docType: c.doc_type,
-      tabSlug: c.tab_slug, fileUrl: c.file_url, similarity: Math.round(c.similarity * 100),
-    }));
+    // Build sources from merged chunks + keyword results (deduplicated)
+    const sourceMap = new Map();
+    for (const c of mergedChunks) {
+      if (!sourceMap.has(c.document_id)) {
+        sourceMap.set(c.document_id, {
+          id: c.document_id, title: c.title, docType: c.doc_type,
+          tabSlug: c.tab_slug, fileUrl: c.file_url, similarity: Math.round((c.similarity || 0.5) * 100),
+        });
+      }
+    }
+    for (const d of keywordResults) {
+      if (!sourceMap.has(d.id)) {
+        sourceMap.set(d.id, {
+          id: d.id, title: d.title, docType: d.doc_type,
+          tabSlug: d.tab_slug, fileUrl: d.file_url, similarity: Math.round((d.rank || 0.5) * 100),
+        });
+      }
+    }
+    const docSources = Array.from(sourceMap.values()).slice(0, 5);
 
     if (docSources.length > 0) {
       res.write(`data: ${JSON.stringify({ type: 'sources', sources: docSources })}\n\n`);

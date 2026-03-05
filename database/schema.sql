@@ -279,21 +279,45 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT
+  SELECT DISTINCT ON (d.id)
     d.id,
     d.title,
     d.description,
     d.doc_type,
     d.tab_slug,
     d.file_url,
-    ts_rank(to_tsvector('english', d.title || ' ' || COALESCE(d.description, '')), 
-            plainto_tsquery('english', search_query)) AS rank
+    GREATEST(
+      -- Full-text search on title + description
+      ts_rank(to_tsvector('english', COALESCE(d.title,'') || ' ' || COALESCE(d.description, '')),
+              plainto_tsquery('english', search_query)),
+      -- Boost for ILIKE match on title (catches acronyms like SDS, PPG)
+      CASE WHEN d.title ILIKE '%' || search_query || '%' THEN 0.8 ELSE 0.0 END,
+      -- Boost for doc_type match
+      CASE WHEN LOWER(d.doc_type) = LOWER(search_query) THEN 0.9
+           WHEN d.doc_type ILIKE '%' || search_query || '%' THEN 0.7 ELSE 0.0 END,
+      -- Boost for tag match
+      CASE WHEN EXISTS (
+        SELECT 1 FROM unnest(d.tags) AS t WHERE t ILIKE '%' || search_query || '%'
+      ) THEN 0.75 ELSE 0.0 END
+    )::FLOAT AS rank
   FROM public.documents d
   WHERE d.is_active = true
     AND (tab_filter IS NULL OR d.tab_slug = tab_filter)
-    AND to_tsvector('english', d.title || ' ' || COALESCE(d.description, '')) 
+    AND (
+      -- Full-text search
+      to_tsvector('english', COALESCE(d.title,'') || ' ' || COALESCE(d.description, ''))
         @@ plainto_tsquery('english', search_query)
-  ORDER BY rank DESC
+      -- OR ILIKE on title (catches acronyms)
+      OR d.title ILIKE '%' || search_query || '%'
+      -- OR doc_type match
+      OR LOWER(d.doc_type) = LOWER(search_query)
+      OR d.doc_type ILIKE '%' || search_query || '%'
+      -- OR tag match
+      OR EXISTS (
+        SELECT 1 FROM unnest(d.tags) AS t WHERE t ILIKE '%' || search_query || '%'
+      )
+    )
+  ORDER BY d.id, rank DESC
   LIMIT result_limit;
 END;
 $$;
