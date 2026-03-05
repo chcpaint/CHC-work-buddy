@@ -147,6 +147,10 @@ app.get('/health', (req, res) => {
     version: process.env.npm_package_version || '1.0.0',
     cors_origins: allowedOrigins,
     port: PORT,
+    anthropic_ready: !!anthropic,
+    openai_ready: !!openai,
+    openai_key_set: !!process.env.OPENAI_API_KEY,
+    anthropic_key_set: !!process.env.ANTHROPIC_API_KEY,
   });
 });
 
