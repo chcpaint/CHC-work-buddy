@@ -30,9 +30,10 @@ const VIDEO_INTENT_PATTERNS = [
 // Detect when user is asking "what videos/media do you have" (inventory question)
 const MEDIA_INVENTORY_PATTERNS = [
   /\b(what|which|list|any|all)\b.*\b(video|videos|media|training|tutorial|clip)\b/i,
-  /\b(video|videos|media|training|tutorial)\b.*\b(do\s+you\s+have|available|exist|are\s+there|got|library)\b/i,
+  /\b(video|videos|media|training|tutorial)\b.*\b(do\s+you\s+have|available|exist|are\s+there|got|library|find|found|can'?t\s+find|cannot\s+find|where|no\s+video)\b/i,
   /\b(do\s+you\s+have)\b.*\b(video|videos|media|training|tutorial)\b/i,
   /\b(show|see|view|browse)\b.*\b(all|every|library|collection)\b/i,
+  /\b(no|don'?t\s+have|can'?t\s+find|cannot\s+find|where\s+are)\b.*\b(video|videos|media)\b/i,
 ];
 
 function hasVideoIntent(message) {
@@ -79,10 +80,11 @@ agentRouter.post('/query', async (req, res) => {
 
     // Run embedding search, keyword search (tab-filtered + cross-tab), and media search in parallel
     // For inventory questions ("what videos do you have"), fetch ALL media instead of searching
-    const [embedding, mediaResults, tabKeywordResults, allKeywordResults] = await Promise.all([
+    // For specific video queries, search but fall back to all media if nothing found
+    const [embedding, initialMediaResults, tabKeywordResults, allKeywordResults] = await Promise.all([
       openai ? generateEmbedding(message) : Promise.resolve(null),
       wantsMediaInventory
-        ? getAllMedia(tabSlug)
+        ? getAllMedia()
         : (wantsVideo ? searchMedia(videoSearchTerms || message, tabSlug, null) : Promise.resolve([])),
       // Tab-filtered keyword search
       supabase.rpc('search_documents', {
@@ -99,6 +101,13 @@ agentRouter.post('/query', async (req, res) => {
         return [];
       }),
     ]);
+
+    // Safety net: if user wanted video but search returned nothing, fetch ALL media
+    let mediaResults = initialMediaResults;
+    if ((wantsVideo || wantsMediaInventory) && mediaResults.length === 0) {
+      logger.info('Video search returned 0 results, fetching ALL media as fallback');
+      mediaResults = await getAllMedia();
+    }
 
     // Merge tab-filtered + cross-tab keyword results, dedup by id
     const kwSeen = new Set();
@@ -326,15 +335,15 @@ agentRouter.get('/sessions', async (req, res) => {
 });
 
 // Fetch ALL active media (for inventory questions like "what videos do you have")
-async function getAllMedia(tabSlug, limit = 20) {
+// NOTE: Intentionally does NOT filter by tabSlug so users always see all available videos
+async function getAllMedia(limit = 50) {
   try {
-    let query = supabase.from('media_items').select('*')
+    const { data, error } = await supabase.from('media_items').select('*')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(limit);
-    if (tabSlug) query = query.eq('tab_slug', tabSlug);
-    const { data, error } = await query;
     if (error) throw error;
+    logger.info('getAllMedia result', { count: (data || []).length });
     return data || [];
   } catch (err) {
     logger.warn('getAllMedia error', { err: err.message });
@@ -344,41 +353,35 @@ async function getAllMedia(tabSlug, limit = 20) {
 
 async function searchMedia(query, tabSlug, language, mediaType, limit = 8) {
   try {
+    // Try RPC search first (no tab filter — we want to find ALL matching media)
     const { data, error } = await supabase.rpc('search_media', {
-      search_query: query, tab_filter: tabSlug || null,
-      media_type_filter: mediaType || null, language_filter: language || null,
+      search_query: query, tab_filter: null,
+      media_type_filter: mediaType || null, language_filter: null,
       result_limit: limit,
     });
     if (error) throw error;
-    // If RPC returns nothing, try without language filter (language mismatch is common)
-    if ((!data || data.length === 0) && language) {
-      const { data: noLangData } = await supabase.rpc('search_media', {
-        search_query: query, tab_filter: tabSlug || null,
-        media_type_filter: mediaType || null, language_filter: null,
-        result_limit: limit,
-      });
-      if (noLangData && noLangData.length > 0) return noLangData;
-    }
-    return data || [];
+    if (data && data.length > 0) return data;
   } catch (err) {
-    logger.warn('search_media RPC fallback', { err: err.message });
-    // Broader fallback — try ILIKE on title/description/tags per word
-    try {
-      const words = query.toLowerCase().split(/\s+/).filter(w => w.length >= 3);
-      let fb = supabase.from('media_items').select('*').eq('is_active', true).limit(limit);
-      if (words.length > 0) {
-        const orClauses = words.map(w => `title.ilike.%${w}%,description.ilike.%${w}%`).join(',');
-        fb = fb.or(orClauses);
-      }
-      const { data: fallback } = await fb;
-      return fallback || [];
-    } catch (e2) {
-      // Last resort — just return all media
-      const { data: all } = await supabase.from('media_items').select('*')
-        .eq('is_active', true).limit(limit);
-      return all || [];
-    }
+    logger.warn('search_media RPC failed (may not exist)', { err: err.message });
   }
+
+  // Fallback 1 — ILIKE on title/description per word
+  try {
+    const words = query.toLowerCase().split(/\s+/).filter(w => w.length >= 3);
+    let fb = supabase.from('media_items').select('*').eq('is_active', true).limit(limit);
+    if (words.length > 0) {
+      const orClauses = words.map(w => `title.ilike.%${w}%,description.ilike.%${w}%`).join(',');
+      fb = fb.or(orClauses);
+    }
+    const { data: fallback } = await fb;
+    if (fallback && fallback.length > 0) return fallback;
+  } catch (e2) {
+    logger.warn('ILIKE fallback failed', { err: e2.message });
+  }
+
+  // Fallback 2 — just return ALL media (the user asked for videos, show them what we have)
+  logger.info('searchMedia: returning all media as last resort');
+  return getAllMedia(limit);
 }
 
 async function saveToSession(userId, sessionId, userMsg, assistantMsg, language, docSources, mediaSources, voiceInput) {
