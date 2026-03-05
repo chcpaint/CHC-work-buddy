@@ -524,7 +524,7 @@ function MediaManager({ token, onToast, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [file, setFile] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", mediaType: "video", tabSlug: "prep", language: "en", fileUrl: "", tags: "", keywords: "", transcript: "" });
+  const [form, setForm] = useState({ title: "", description: "", mediaType: "video", tabSlug: "", language: "en", fileUrl: "", tags: "", keywords: "", transcript: "" });
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -535,15 +535,24 @@ function MediaManager({ token, onToast, refreshKey }) {
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
+  const isYouTubeUrl = (url) => /(?:youtube\.com|youtu\.be)/i.test(url || "");
+
   const handleSubmit = async () => {
     if (!form.title) { onToast("Title is required", "error"); return; }
     if (!file && !form.fileUrl) { onToast("Provide a file or URL", "error"); return; }
     setUploading(true);
     try {
+      // Build payload — route YouTube URLs to the youtubeUrl field
+      const payload = { ...form };
+      if (!file && isYouTubeUrl(form.fileUrl)) {
+        payload.youtubeUrl = form.fileUrl;
+        delete payload.fileUrl;
+      }
+
       if (file) {
         const fd = new FormData();
         fd.append("file", file);
-        Object.entries(form).forEach(([k, v]) => v && fd.append(k, v));
+        Object.entries(payload).forEach(([k, v]) => v && fd.append(k, v));
         const res = await fetch(`${API_BASE}/api/ingest/media`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -554,13 +563,13 @@ function MediaManager({ token, onToast, refreshKey }) {
         await api("/api/ingest/media", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       }
       onToast(`"${form.title}" added`, "success");
       setShowUpload(false);
       setFile(null);
-      setForm({ title: "", description: "", mediaType: "video", tabSlug: "prep", language: "en", fileUrl: "", tags: "", keywords: "", transcript: "" });
+      setForm({ title: "", description: "", mediaType: "video", tabSlug: "", language: "en", fileUrl: "", tags: "", keywords: "", transcript: "" });
       api("/api/media?limit=50").then(d => setMedia(d.media || []));
     } catch (e) {
       onToast(e.message, "error");
@@ -594,8 +603,16 @@ function MediaManager({ token, onToast, refreshKey }) {
           </DropZone>
 
           {!file && (
-            <Input label="OR — External URL (YouTube, Vimeo, hosted video)" value={form.fileUrl}
-              onChange={e => set("fileUrl", e.target.value)} placeholder="https://..." />
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <Input label="OR — Paste a YouTube link or external video URL" value={form.fileUrl}
+                onChange={e => set("fileUrl", e.target.value)} placeholder="https://www.youtube.com/watch?v=... or any video URL" />
+              {isYouTubeUrl(form.fileUrl) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8 }}>
+                  <span style={{ fontSize: 18 }}>▶️</span>
+                  <span style={{ color: "#f87171", fontSize: 12, fontWeight: 600 }}>YouTube detected — thumbnail will be generated automatically</span>
+                </div>
+              )}
+            </div>
           )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
