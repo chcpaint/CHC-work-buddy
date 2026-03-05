@@ -10,6 +10,10 @@ const CHUNK_OVERLAP = 100;
 // ─── Embedding Generation ─────────────────────────────────────
 
 export async function generateEmbedding(text) {
+  if (!openai) {
+    logger.warn('OpenAI client not initialized — skipping embedding generation');
+    return null;
+  }
   try {
     const response = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
@@ -18,7 +22,7 @@ export async function generateEmbedding(text) {
     return response.data[0].embedding;
   } catch (error) {
     logger.error('Embedding generation failed', { error: error.message });
-    throw error;
+    return null;
   }
 }
 

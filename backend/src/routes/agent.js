@@ -35,18 +35,29 @@ agentRouter.post('/query', async (req, res) => {
   if (!message?.trim()) return res.status(400).json({ error: 'Message is required' });
 
   try {
+    // Check if AI client is available
+    if (!anthropic) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.write(`data: ${JSON.stringify({ type: 'text', content: 'AI service is not configured yet. Please ask your administrator to set the ANTHROPIC_API_KEY environment variable.' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+      return res.end();
+    }
+
     const lang = language || await detectLanguage(message) || 'en';
     const wantsVideo = hasVideoIntent(message);
     const videoSearchTerms = wantsVideo ? extractVideoSearchTerms(message) : null;
 
+    // Only run embedding search if OpenAI is configured
     const [embedding, mediaResults] = await Promise.all([
-      generateEmbedding(message),
+      openai ? generateEmbedding(message) : Promise.resolve(null),
       wantsVideo ? searchMedia(videoSearchTerms || message, tabSlug, lang) : Promise.resolve([]),
     ]);
 
-    const relevantChunks = await matchDocuments(embedding, {
+    const relevantChunks = embedding ? await matchDocuments(embedding, {
       tabFilter: tabSlug, matchCount: 6, threshold: 0.60,
-    });
+    }) : [];
 
     const { data: keywordResults } = await supabase.rpc('search_documents', {
       search_query: message, tab_filter: tabSlug || null, result_limit: 4,
