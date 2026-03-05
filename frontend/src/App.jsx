@@ -1234,33 +1234,36 @@ export default function App() {
                 background: isActive ? `${tab.color}18` : "transparent",
                 border: "none",
                 borderBottom: isActive ? `4px solid ${tab.color}` : `4px solid transparent`,
-                color: isActive ? tab.color : colors.textSecondary,
-                fontSize: 15,
-                fontWeight: 800,
+                color: isActive ? tab.color : "rgba(255,255,255,0.75)",
+                fontSize: 17,
+                fontWeight: 600,
                 fontFamily: "'Barlow Condensed', sans-serif",
-                letterSpacing: 1.2,
+                letterSpacing: 1.8,
                 textTransform: "uppercase",
                 cursor: "pointer",
                 transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                padding: "0 18px",
-                opacity: isActive ? 1 : 0.7,
+                padding: "0 20px",
+                opacity: isActive ? 1 : 0.85,
                 whiteSpace: "nowrap",
                 position: "relative",
+                textShadow: isActive ? `0 0 12px ${tab.color}60, 0 1px 2px rgba(0,0,0,0.5)` : "0 1px 3px rgba(0,0,0,0.6)",
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.target.style.opacity = "0.9";
+                  e.target.style.opacity = "1";
                   e.target.style.color = tab.color;
+                  e.target.style.textShadow = `0 0 12px ${tab.color}60, 0 1px 2px rgba(0,0,0,0.5)`;
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  e.target.style.opacity = "0.7";
-                  e.target.style.color = colors.textSecondary;
+                  e.target.style.opacity = "0.85";
+                  e.target.style.color = "rgba(255,255,255,0.75)";
+                  e.target.style.textShadow = "0 1px 3px rgba(0,0,0,0.6)";
                 }
               }}
             >
-              <TabIcon type={tab.iconType} size={isActive ? 24 : 22} color={isActive ? tab.color : colors.textSecondary} />
+              <TabIcon type={tab.iconType} size={isActive ? 24 : 22} color={isActive ? tab.color : "rgba(255,255,255,0.75)"} />
               <span>{tab.label[language]}</span>
             </button>
           );
