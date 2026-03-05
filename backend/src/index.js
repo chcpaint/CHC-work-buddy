@@ -163,6 +163,65 @@ app.get('/health', (req, res) => {
 // ─── Public Routes ─────────────────────────────────────────────
 app.use('/api/auth', authRouter);
 
+// ─── Diagnostic: test AI + DB functions ──────────────────────
+app.get('/api/maintenance/test-agent', async (req, res) => {
+  const results = { steps: [] };
+  try {
+    // Test 1: Can we query document_chunks?
+    const { data: chunks, error: chunkErr } = await supabase
+      .from('document_chunks')
+      .select('id, content')
+      .limit(2);
+    results.steps.push({ step: 'query_chunks', success: !chunkErr, count: chunks?.length, error: chunkErr?.message });
+
+    // Test 2: Does search_documents RPC exist?
+    try {
+      const { data: searchData, error: searchErr } = await supabase.rpc('search_documents', {
+        search_query: 'body filler', tab_filter: null, result_limit: 3,
+      });
+      results.steps.push({ step: 'search_documents_rpc', success: !searchErr, count: searchData?.length, error: searchErr?.message });
+    } catch (e) {
+      results.steps.push({ step: 'search_documents_rpc', success: false, error: e.message });
+    }
+
+    // Test 3: Does match_documents RPC exist? (need embedding)
+    try {
+      const { generateEmbedding } = await import('./services/rag.js');
+      const emb = await generateEmbedding('body filler application');
+      results.steps.push({ step: 'generate_embedding', success: !!emb, dimensions: emb?.length });
+
+      if (emb) {
+        const { data: matchData, error: matchErr } = await supabase.rpc('match_documents', {
+          query_embedding: emb, match_threshold: 0.5, match_count: 3, tab_filter: null,
+        });
+        results.steps.push({ step: 'match_documents_rpc', success: !matchErr, count: matchData?.length, error: matchErr?.message });
+      }
+    } catch (e) {
+      results.steps.push({ step: 'vector_search', success: false, error: e.message });
+    }
+
+    // Test 4: Can Anthropic respond?
+    try {
+      if (anthropic) {
+        const resp = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 50,
+          messages: [{ role: 'user', content: 'Say "hello" in one word.' }],
+        });
+        results.steps.push({ step: 'anthropic_chat', success: true, response: resp.content[0]?.text });
+      } else {
+        results.steps.push({ step: 'anthropic_chat', success: false, error: 'anthropic client is null' });
+      }
+    } catch (e) {
+      results.steps.push({ step: 'anthropic_chat', success: false, error: e.message });
+    }
+
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message, steps: results.steps });
+  }
+});
+
 // ─── Maintenance: one-time embedding backfill (no auth) ──────
 app.all('/api/maintenance/generate-embeddings', async (req, res) => {
   try {
