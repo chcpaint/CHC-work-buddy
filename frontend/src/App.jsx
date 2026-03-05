@@ -1,14 +1,67 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// ─── Industry SVG Icons ──────────────────────────────────────
+const TabIcon = ({ type, size = 22, color = "currentColor" }) => {
+  const icons = {
+    disassembly: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Wrench + bolt disassembly */}
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        <line x1="18" y1="2" x2="22" y2="6" opacity="0.5"/>
+        <line x1="15" y1="2" x2="15" y2="5" opacity="0.4"/>
+      </svg>
+    ),
+    bodyrepair: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Hammer + dent repair */}
+        <path d="M15 12l-8.5 8.5a2.12 2.12 0 1 1-3-3L12 9"/>
+        <path d="M17.64 2.36a2.12 2.12 0 0 1 3 3L14.5 11.5"/>
+        <path d="M21 11l-3-3" opacity="0.6"/>
+        <path d="M19 13c.5 3.5-1.5 6.5-5 8" opacity="0.4" strokeDasharray="2 2"/>
+      </svg>
+    ),
+    paintgun: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Spray paint gun */}
+        <rect x="2" y="6" width="10" height="8" rx="1"/>
+        <path d="M12 9h4l3-3h2v12h-2l-3-3h-4"/>
+        <circle cx="7" cy="10" r="2" fill={color} opacity="0.3"/>
+        {/* Paint spray dots */}
+        <circle cx="22" cy="7" r="0.8" fill={color} opacity="0.5"/>
+        <circle cx="23" cy="10" r="0.6" fill={color} opacity="0.4"/>
+        <circle cx="22" cy="13" r="0.7" fill={color} opacity="0.5"/>
+        <circle cx="24" cy="8.5" r="0.5" fill={color} opacity="0.3"/>
+        <circle cx="24" cy="11.5" r="0.5" fill={color} opacity="0.3"/>
+      </svg>
+    ),
+    reassembly: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Gears / assembly */}
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        <circle cx="12" cy="12" r="7" opacity="0.3" strokeDasharray="3 3"/>
+      </svg>
+    ),
+    detailing: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Magnifying glass + sparkle for QC */}
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        {/* Sparkle / check inside */}
+        <path d="M8 11l2 2 4-4" strokeWidth="2.5"/>
+      </svg>
+    ),
+  };
+  return icons[type] || null;
+};
+
 // ─── Constants ────────────────────────────────────────────────
 const TABS = [
-  { slug: "admin-intake",  label: { en: "Admin / Intake",   fr: "Admin / Réception", es: "Admin / Recepción" },  icon: "📋", color: "#3b82f6" },
-  { slug: "disassemble",   label: { en: "Disassemble",      fr: "Démontage",          es: "Desmontaje" },          icon: "🔧", color: "#f97316" },
-  { slug: "prep",          label: { en: "Prep",             fr: "Préparation",        es: "Preparación" },         icon: "🎯", color: "#eab308" },
-  { slug: "body-work",     label: { en: "Body Work",        fr: "Carrosserie",        es: "Carrocería" },          icon: "⚒️",  color: "#ef4444" },
-  { slug: "primer-paint",  label: { en: "Primer & Paint",   fr: "Apprêt & Peinture",  es: "Imprimación" },         icon: "🎨", color: "#8b5cf6" },
-  { slug: "detailing",     label: { en: "Detailing",        fr: "Finition",           es: "Detallado" },           icon: "✨", color: "#06b6d4" },
-  { slug: "hand-back",     label: { en: "Hand Back",        fr: "Remise Client",      es: "Entrega" },             icon: "🤝", color: "#22c55e" },
+  { slug: "vehicle-disassembly", label: { en: "Vehicle Disassembly", fr: "Démontage Véhicule",   es: "Desmontaje de Vehículo" },   iconType: "disassembly", color: "#f97316" },
+  { slug: "auto-body-repairs",   label: { en: "Auto Body Repairs",   fr: "Réparations Carrosserie", es: "Reparaciones de Carrocería" }, iconType: "bodyrepair", color: "#ef4444" },
+  { slug: "painting",            label: { en: "Painting",            fr: "Peinture",             es: "Pintura" },                    iconType: "paintgun",  color: "#8b5cf6" },
+  { slug: "reassembly",          label: { en: "Reassembly",          fr: "Réassemblage",         es: "Reensamblaje" },               iconType: "reassembly", color: "#3b82f6" },
+  { slug: "detailing-qc",        label: { en: "Detailing & QC",      fr: "Finition & CQ",        es: "Detallado y CC" },             iconType: "detailing", color: "#22c55e" },
 ];
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://chc-work-buddy-production-5b0e.up.railway.app";
@@ -505,7 +558,7 @@ function MediaViewer({ item, onClose, theme = "dark" }) {
 
 // ─── Main App ─────────────────────────────────────────────────
 export default function App() {
-  const [activeTab, setActiveTab] = useState("admin-intake");
+  const [activeTab, setActiveTab] = useState("vehicle-disassembly");
   const [language, setLanguage] = useState("en");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -1120,7 +1173,7 @@ export default function App() {
 
       {/* ── Tab Navigation ── */}
       <nav style={{
-        height: 56,
+        height: 72,
         background: colors.surface,
         borderBottom: `1px solid ${colors.border}`,
         display: "flex", alignItems: "stretch",
@@ -1137,21 +1190,21 @@ export default function App() {
               className="tab-btn"
               onClick={() => { setActiveTab(tab.slug); setSearchResults([]); setSearchQuery(""); }}
               style={{
-                flex: "1 0 auto",
-                minWidth: 130,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                background: isActive ? `${tab.color}15` : "transparent",
+                flex: "1 1 0",
+                minWidth: 160,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                background: isActive ? `${tab.color}18` : "transparent",
                 border: "none",
-                borderBottom: isActive ? `3px solid ${tab.color}` : `3px solid transparent`,
+                borderBottom: isActive ? `4px solid ${tab.color}` : `4px solid transparent`,
                 color: isActive ? tab.color : colors.textSecondary,
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize: 15,
+                fontWeight: 800,
                 fontFamily: "'Barlow Condensed', sans-serif",
-                letterSpacing: 1,
+                letterSpacing: 1.2,
                 textTransform: "uppercase",
                 cursor: "pointer",
                 transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                padding: "0 12px",
+                padding: "0 18px",
                 opacity: isActive ? 1 : 0.7,
                 whiteSpace: "nowrap",
                 position: "relative",
@@ -1169,7 +1222,7 @@ export default function App() {
                 }
               }}
             >
-              <span style={{ fontSize: 16 }}>{tab.icon}</span>
+              <TabIcon type={tab.iconType} size={isActive ? 24 : 22} color={isActive ? tab.color : colors.textSecondary} />
               <span>{tab.label[language]}</span>
             </button>
           );
@@ -1195,7 +1248,7 @@ export default function App() {
             borderBottom: `1px solid ${colors.border}`,
             animation: "slideUp 0.4s ease",
           }}>
-            <span style={{ fontSize: 28 }}>{currentTab?.icon}</span>
+            <span style={{ display: "flex", alignItems: "center" }}><TabIcon type={currentTab?.iconType} size={30} color={currentTab?.color} /></span>
             <div>
               <h2 style={{
                 fontFamily: "'Barlow Condensed', sans-serif",

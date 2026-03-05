@@ -83,13 +83,11 @@ Use the provided context to give accurate, sourced answers.
 };
 
 const TAB_CONTEXT = {
-  'admin-intake': 'The user is working in Admin/Intake. Focus on job cards, estimates, customer communication, and work order management.',
-  'disassemble': 'The user is in the Disassembly stage. Focus on removal procedures, parts identification, damage assessment, and safety during disassembly.',
-  'prep': 'The user is in the Prep stage. Focus on surface preparation, sanding, masking, cleaning procedures, and prep product specifications.',
-  'body-work': 'The user is in Body Work stage. Focus on panel repair, filler application, welding procedures, and structural repairs.',
-  'primer-paint': 'The user is in Primer & Paint stage. Focus on primer selection, mixing ratios, paint application, spray techniques, and SDS safety.',
-  'detailing': 'The user is in Detailing stage. Focus on polishing compounds, paint correction, interior cleaning, and final finish quality.',
-  'hand-back': 'The user is in Hand Back stage. Focus on final quality inspection, documentation, customer walkthrough procedures, and warranty information.',
+  'vehicle-disassembly': 'The user is in the Vehicle Disassembly stage. Focus on removal procedures, trim and panel disassembly, parts identification, labeling, damage assessment, bolt/clip tracking, and safety during teardown.',
+  'auto-body-repairs': 'The user is in the Auto Body Repairs stage. Focus on panel repair, dent pulling, filler/bondo application, welding procedures, structural straightening, frame alignment, and metal finishing.',
+  'painting': 'The user is in the Painting stage. Focus on surface prep, masking, primer selection and application, paint mixing ratios, spray gun setup and techniques, clear coat application, SDS safety data sheets, booth procedures, and color matching.',
+  'reassembly': 'The user is in the Reassembly stage. Focus on reinstalling trim, panels, bumpers, lights, mechanical components, torque specifications, clip/fastener references, wiring reconnection, and proper fit/alignment.',
+  'detailing-qc': 'The user is in Detailing & Quality Control stage. Focus on polishing compounds, paint correction, buffing, interior cleaning, final inspection checklists, customer walkthrough, documentation, and warranty information.',
 };
 
 export function getSystemPrompt(language = 'en', tabSlug = null) {

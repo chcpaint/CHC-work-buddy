@@ -57,13 +57,11 @@ CREATE TABLE public.workflow_tabs (
 
 -- Seed default tabs
 INSERT INTO public.workflow_tabs (slug, label_en, label_fr, label_es, icon, sort_order, color_hex) VALUES
-  ('admin-intake',    'Admin / Intake',    'Admin / Réception',    'Admin / Recepción',    '📋', 1, '#3b82f6'),
-  ('disassemble',     'Disassemble',       'Démontage',            'Desmontaje',           '🔧', 2, '#f97316'),
-  ('prep',            'Prep',              'Préparation',          'Preparación',          '🎯', 3, '#eab308'),
-  ('body-work',       'Body Work',         'Carrosserie',          'Carrocería',           '⚒️',  4, '#ef4444'),
-  ('primer-paint',    'Primer & Paint',    'Apprêt & Peinture',    'Imprimación & Pintura','🎨', 5, '#8b5cf6'),
-  ('detailing',       'Detailing',         'Finition',             'Detallado',            '✨', 6, '#06b6d4'),
-  ('hand-back',       'Hand Back',         'Remise au Client',     'Entrega',              '🤝', 7, '#22c55e');
+  ('vehicle-disassembly', 'Vehicle Disassembly', 'Démontage Véhicule',        'Desmontaje de Vehículo',      '🔧', 1, '#f97316'),
+  ('auto-body-repairs',   'Auto Body Repairs',   'Réparations Carrosserie',   'Reparaciones de Carrocería',  '🔨', 2, '#ef4444'),
+  ('painting',            'Painting',            'Peinture',                  'Pintura',                     '🎨', 3, '#8b5cf6'),
+  ('reassembly',          'Reassembly',          'Réassemblage',              'Reensamblaje',                '⚙️',  4, '#3b82f6'),
+  ('detailing-qc',        'Detailing & QC',      'Finition & CQ',             'Detallado y CC',              '✅', 5, '#22c55e');
 
 -- ─────────────────────────────────────────
 -- DOCUMENTS (SDS, TECH SHEETS, MANUALS)

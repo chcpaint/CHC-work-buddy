@@ -8,8 +8,8 @@ import { anthropic } from '../index.js';
 import { logger } from '../utils/logger.js';
 
 const VALID_TABS = [
-  'admin-intake', 'disassemble', 'prep',
-  'body-work', 'primer-paint', 'detailing', 'hand-back',
+  'vehicle-disassembly', 'auto-body-repairs',
+  'painting', 'reassembly', 'detailing-qc',
 ];
 
 const VALID_DOC_TYPES = ['sds', 'tech_sheet', 'manual', 'procedure', 'checklist', 'other'];
@@ -33,7 +33,7 @@ export async function autoTagDocument(text, existingMetadata = {}) {
       max_tokens: 300,
       system: `You are a tagging assistant for an automotive body shop knowledge base. Analyze the document text and return a JSON object with:
 - "tags": array of 5-10 lowercase keyword tags relevant to body shop work (e.g., "paint mixing", "sds", "ppe", "bondo", "clear coat", "sanding", "primer")
-- "suggestedTab": one of: admin-intake, disassemble, prep, body-work, primer-paint, detailing, hand-back (pick the most relevant workflow stage)
+- "suggestedTab": one of: vehicle-disassembly, auto-body-repairs, painting, reassembly, detailing-qc (pick the most relevant workflow stage)
 - "suggestedDocType": one of: sds, tech_sheet, manual, procedure, checklist, other
 - "description": a 1-2 sentence description of the document if not already provided
 
@@ -91,7 +91,7 @@ export async function autoTagMedia(metadata = {}) {
       system: `You are a tagging assistant for an automotive body shop video/media library. Analyze the media metadata and return a JSON object with:
 - "tags": array of 5-8 lowercase tags for browsing/filtering (e.g., "spray technique", "clear coat", "ppe")
 - "keywords": array of 3-5 specific technical keywords for search (e.g., "2k clear", "hvlp gun", "wet sanding")
-- "suggestedTab": one of: admin-intake, disassemble, prep, body-work, primer-paint, detailing, hand-back
+- "suggestedTab": one of: vehicle-disassembly, auto-body-repairs, painting, reassembly, detailing-qc
 
 Return ONLY valid JSON.`,
       messages: [

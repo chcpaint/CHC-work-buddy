@@ -4,13 +4,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const API_BASE = import.meta?.env?.VITE_API_URL || "https://chc-work-buddy-production-5b0e.up.railway.app";
 
 const TABS = [
-  { slug: "admin-intake",  label: "Admin / Intake",  icon: "📋", color: "#3b82f6" },
-  { slug: "disassemble",   label: "Disassemble",      icon: "🔧", color: "#f97316" },
-  { slug: "prep",          label: "Prep",             icon: "🎯", color: "#eab308" },
-  { slug: "body-work",     label: "Body Work",        icon: "⚒️",  color: "#ef4444" },
-  { slug: "primer-paint",  label: "Primer & Paint",   icon: "🎨", color: "#8b5cf6" },
-  { slug: "detailing",     label: "Detailing",        icon: "✨", color: "#06b6d4" },
-  { slug: "hand-back",     label: "Hand Back",        icon: "🤝", color: "#22c55e" },
+  { slug: "vehicle-disassembly", label: "Vehicle Disassembly",   icon: "🔧", color: "#f97316" },
+  { slug: "auto-body-repairs",   label: "Auto Body Repairs",     icon: "🔨", color: "#ef4444" },
+  { slug: "painting",            label: "Painting",              icon: "🎨", color: "#8b5cf6" },
+  { slug: "reassembly",          label: "Reassembly",            icon: "⚙️",  color: "#3b82f6" },
+  { slug: "detailing-qc",        label: "Detailing & QC",        icon: "✅", color: "#22c55e" },
 ];
 
 const DOC_TYPES = ["sds", "tech_sheet", "manual", "procedure", "checklist", "other"];
