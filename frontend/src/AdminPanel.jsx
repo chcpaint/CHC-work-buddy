@@ -1025,6 +1025,141 @@ function Settings({ token, onToast }) {
   );
 }
 
+// ─── SECTION: Knowledge Gap Report ───────────────────────────
+function KnowledgeGap({ token, onToast }) {
+  const api = useApi(token);
+  const [summary, setSummary] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(30);
+  const [sourceFilter, setSourceFilter] = useState("all");
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api(`/api/query-logs/summary?days=${days}`),
+      api(`/api/query-logs?days=${days}&limit=100${sourceFilter !== "all" ? `&source=${sourceFilter}` : ""}`),
+    ]).then(([s, l]) => {
+      setSummary(s);
+      setLogs(l.logs || []);
+    }).catch(err => {
+      console.error("KG load error:", err);
+      onToast("Failed to load query data", "error");
+    }).finally(() => setLoading(false));
+  }, [days, sourceFilter]);
+
+  const exportCSV = () => {
+    const url = `${API_BASE}/api/query-logs/export?days=${days}`;
+    authFetch(url).then(r => r.blob()).then(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `query_logs_${days}d.csv`;
+      a.click();
+      onToast("CSV exported", "success");
+    }).catch(() => onToast("Export failed", "error"));
+  };
+
+  const srcColor = { vector: "#22c55e", rag: "#3b82f6", llm: "#f97316" };
+  const srcLabel = { vector: "Verified", rag: "Database", llm: "AI General" };
+
+  if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Loading analytics...</div>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <SectionTitle>Knowledge Gap Report</SectionTitle>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select value={days} onChange={e => setDays(+e.target.value)} style={{ background: "#0a1220", color: "#f1f5f9", border: "1px solid #1e3a5f", borderRadius: 6, padding: "6px 10px", fontSize: 11 }}>
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+          </select>
+          <Btn variant="primary" onClick={exportCSV} style={{ padding: "6px 14px", fontSize: 11 }}>Export CSV</Btn>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      {summary && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          <StatCard icon="📊" label="Total Queries" value={summary.total || 0} color="#f97316" />
+          <StatCard icon="✅" label="Verified (Vector)" value={summary.breakdown?.vector || 0} sub={summary.total ? `${Math.round(((summary.breakdown?.vector || 0) / summary.total) * 100)}%` : "0%"} color="#22c55e" />
+          <StatCard icon="🔍" label="Database (RAG)" value={summary.breakdown?.rag || 0} sub={summary.total ? `${Math.round(((summary.breakdown?.rag || 0) / summary.total) * 100)}%` : "0%"} color="#3b82f6" />
+          <StatCard icon="⚠️" label="AI General (LLM)" value={summary.breakdown?.llm || 0} sub={summary.total ? `${Math.round(((summary.breakdown?.llm || 0) / summary.total) * 100)}%` : "0%"} color="#f97316" />
+          <StatCard icon="🛡️" label="Coverage Rate" value={`${summary.coveragePercent || 0}%`} sub="From verified sources" color={summary.coveragePercent >= 80 ? "#22c55e" : summary.coveragePercent >= 50 ? "#eab308" : "#ef4444"} />
+        </div>
+      )}
+
+      {/* Coverage Bar */}
+      {summary && summary.total > 0 && (
+        <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Source Distribution</div>
+          <div style={{ display: "flex", height: 24, borderRadius: 6, overflow: "hidden", background: "#0a1220" }}>
+            {["vector", "rag", "llm"].map(src => {
+              const pct = summary.total ? ((summary.breakdown?.[src] || 0) / summary.total) * 100 : 0;
+              return pct > 0 ? <div key={src} style={{ width: `${pct}%`, background: srcColor[src], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#fff", minWidth: pct > 5 ? "auto" : 0 }}>{pct > 8 ? `${srcLabel[src]} ${Math.round(pct)}%` : ""}</div> : null;
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
+            {["vector", "rag", "llm"].map(src => (
+              <div key={src} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: "#94a3b8" }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: srcColor[src] }} />
+                {srcLabel[src]}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Knowledge Gaps - LLM-answered queries */}
+      {summary?.knowledgeGaps?.length > 0 && (
+        <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #f9731633", borderRadius: 10, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "#f97316", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Top Knowledge Gaps (Questions Without Verified Sources)</div>
+          {summary.knowledgeGaps.slice(0, 15).map((gap, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: 6, background: i % 2 === 0 ? "rgba(249,115,22,0.05)" : "transparent", fontSize: 12, color: "#cbd5e1" }}>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{gap.query}</span>
+              <span style={{ fontSize: 10, color: "#f97316", fontWeight: 600, flexShrink: 0, marginLeft: 12 }}>{ago(gap.created_at)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recent Query Log */}
+      <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Recent Queries</div>
+          <div style={{ display: "flex", gap: 4 }}>
+            {["all", "vector", "rag", "llm"].map(f => (
+              <button key={f} onClick={() => setSourceFilter(f)} style={{
+                padding: "3px 10px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 600, textTransform: "uppercase",
+                background: sourceFilter === f ? (f === "all" ? "#1e3a5f" : srcColor[f] + "33") : "transparent",
+                color: sourceFilter === f ? (f === "all" ? "#f1f5f9" : srcColor[f]) : "#64748b",
+              }}>{f === "all" ? "All" : srcLabel[f]}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ maxHeight: 400, overflow: "auto" }}>
+          {logs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 30, color: "#64748b", fontSize: 12 }}>No queries logged yet. Start chatting with Max!</div>
+          ) : logs.map((log, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 6, background: i % 2 === 0 ? "rgba(30,58,95,0.15)" : "transparent", fontSize: 12 }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                padding: "2px 8px", borderRadius: 10, fontSize: 9, fontWeight: 700,
+                background: srcColor[log.answer_source] ? srcColor[log.answer_source] + "20" : "#64748b20",
+                color: srcColor[log.answer_source] || "#64748b",
+                textTransform: "uppercase", flexShrink: 0, minWidth: 60, justifyContent: "center",
+              }}>{srcLabel[log.answer_source] || log.answer_source}</span>
+              <span style={{ flex: 1, color: "#cbd5e1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.query}</span>
+              <span style={{ fontSize: 10, color: "#64748b", flexShrink: 0 }}>{log.tab_slug || "—"}</span>
+              <span style={{ fontSize: 10, color: "#64748b", flexShrink: 0 }}>{ago(log.created_at)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared: section title ────────────────────────────────────
 function SectionTitle({ children }) {
   return (
@@ -1042,6 +1177,7 @@ const NAV = [
   { id: "library",   label: "Library",    icon: "📚" },
   { id: "media",     label: "Media",      icon: "🎬" },
   { id: "users",     label: "Users",      icon: "👥" },
+  { id: "knowledge", label: "Knowledge Gap", icon: "📊" },
   { id: "settings",  label: "Settings",   icon: "⚙" },
 ];
 
@@ -1237,6 +1373,7 @@ export default function AdminPanel() {
           {section === "library"   && <DocumentLibrary token={token} onToast={addToast} refreshKey={refreshKey} />}
           {section === "media"     && <MediaManager token={token} onToast={addToast} refreshKey={refreshKey} />}
           {section === "users"     && <UserManagement token={token} onToast={addToast} />}
+          {section === "knowledge" && <KnowledgeGap token={token} onToast={addToast} />}
           {section === "settings"  && <Settings token={token} onToast={addToast} />}
         </div>
       </main>

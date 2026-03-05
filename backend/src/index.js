@@ -322,6 +322,81 @@ app.use('/api/ingest', authMiddleware, ingestRouter);
 app.use('/api/auth/users', authMiddleware, usersRouter);
 app.use('/api/learning', authMiddleware, learningRouter);
 
+// ─── Query Logs / Knowledge Gap Report (admin only) ──────────
+app.get('/api/query-logs', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  const { source, days = 30, limit = 500 } = req.query;
+  const since = new Date(Date.now() - Number(days) * 86400000).toISOString();
+
+  let query = supabase.from('query_logs')
+    .select('id, query, answer_source, matched_docs, language, tab_slug, created_at, user_id')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(Number(limit));
+
+  if (source) query = query.eq('answer_source', source);
+
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ logs: data || [], total: (data || []).length });
+});
+
+app.get('/api/query-logs/summary', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  const { days = 30 } = req.query;
+  const since = new Date(Date.now() - Number(days) * 86400000).toISOString();
+
+  const { data: logs } = await supabase.from('query_logs')
+    .select('query, answer_source, tab_slug, created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(2000);
+
+  const allLogs = logs || [];
+  const total = allLogs.length;
+  const vector = allLogs.filter(l => l.answer_source === 'vector').length;
+  const rag = allLogs.filter(l => l.answer_source === 'rag').length;
+  const llm = allLogs.filter(l => l.answer_source === 'llm').length;
+
+  // Knowledge gaps: queries that hit LLM (no docs found)
+  const gaps = allLogs
+    .filter(l => l.answer_source === 'llm')
+    .map(l => ({ query: l.query, tab: l.tab_slug, date: l.created_at }));
+
+  res.json({
+    period: `${days} days`,
+    total,
+    breakdown: { vector, rag, llm },
+    coveragePercent: total > 0 ? Math.round(((vector + rag) / total) * 100) : 100,
+    knowledgeGaps: gaps,
+  });
+});
+
+app.get('/api/query-logs/export', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  const { days = 30 } = req.query;
+  const since = new Date(Date.now() - Number(days) * 86400000).toISOString();
+
+  const { data: logs } = await supabase.from('query_logs')
+    .select('query, answer_source, matched_docs, language, tab_slug, created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(5000);
+
+  // CSV export
+  const header = 'Date,Query,Source,Matched Documents,Language,Tab\n';
+  const rows = (logs || []).map(l => {
+    const date = new Date(l.created_at).toISOString().slice(0, 19);
+    const query = `"${(l.query || '').replace(/"/g, '""')}"`;
+    const docs = `"${(l.matched_docs || []).join('; ')}"`;
+    return `${date},${query},${l.answer_source},${docs},${l.language},${l.tab_slug || 'all'}`;
+  }).join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename=query_logs_${days}d.csv`);
+  res.send(header + rows);
+});
+
 // ─── 404 Handler ──────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });

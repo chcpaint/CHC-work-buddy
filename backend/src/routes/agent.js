@@ -288,6 +288,16 @@ agentRouter.post('/query', async (req, res) => {
       conversationHistory = (msgs || []).map(m => ({ role: m.role, content: m.content }));
     }
 
+    // ─── Determine answer source type ─────────────────────────
+    // vector = embedding matched docs (best), rag = keyword/ILIKE matched, llm = no docs found (worst)
+    let answerSource = 'llm';
+    if (relevantChunks.length > 0) {
+      answerSource = 'vector';
+    } else if (keywordChunks.length > 0 || keywordResults.length > 0) {
+      answerSource = 'rag';
+    }
+    logger.info('Answer source', { answerSource, vectorHits: relevantChunks.length, kwChunkHits: keywordChunks.length, kwDocHits: keywordResults.length });
+
     const contextText = mergedChunks.length > 0
       ? mergedChunks.map((c, i) => `[Source ${i + 1}: ${c.title} (${c.doc_type?.toUpperCase()})]\n${c.content}`).join('\n\n---\n\n')
       : (keywordResults.length > 0
@@ -362,10 +372,13 @@ agentRouter.post('/query', async (req, res) => {
       res.write(`data: ${JSON.stringify({ type: 'sources', sources: docSources })}\n\n`);
     }
 
-    res.write(`data: ${JSON.stringify({ type: 'done', language: lang, hadVideo: mediaResults.length > 0 })}\n\n`);
+    // Send answer source type so frontend can show LLM disclaimer
+    res.write(`data: ${JSON.stringify({ type: 'done', language: lang, hadVideo: mediaResults.length > 0, answerSource })}\n\n`);
     res.end();
 
+    // Save to session AND log the query for knowledge gap tracking
     saveToSession(userId, sessionId, message, fullResponse, lang, docSources, mediaResults, voiceInput);
+    logQuery(userId, message, answerSource, docSources, lang, tabSlug);
 
   } catch (error) {
     logger.error('Agent query error', { error: error.message, stack: error.stack, userId });
@@ -487,5 +500,22 @@ async function saveToSession(userId, sessionId, userMsg, assistantMsg, language,
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sid);
   } catch (err) {
     logger.error('saveToSession error', { err: err.message });
+  }
+}
+
+// ─── Query logging for knowledge gap analysis ──────────────────
+async function logQuery(userId, query, answerSource, docSources, language, tabSlug) {
+  try {
+    await supabase.from('query_logs').insert({
+      user_id: userId,
+      query: query.slice(0, 500),
+      answer_source: answerSource, // 'vector', 'rag', or 'llm'
+      matched_docs: docSources.map(s => s.title).slice(0, 5),
+      language: language || 'en',
+      tab_slug: tabSlug || null,
+    });
+  } catch (err) {
+    // Non-fatal: don't crash if logging table doesn't exist yet
+    logger.warn('Query log insert failed (table may not exist)', { err: err.message });
   }
 }

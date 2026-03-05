@@ -544,6 +544,20 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark" }
         whiteSpace: "pre-wrap",
         boxShadow: isUser ? "none" : `inset 1px 1px 0 ${colors.border}`,
       }}>
+        {/* Answer Source Badge */}
+        {!isUser && message.answerSource && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "3px 10px", borderRadius: 20, marginBottom: 8,
+            fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
+            background: message.answerSource === "vector" ? "rgba(34,197,94,0.15)" : message.answerSource === "rag" ? "rgba(59,130,246,0.15)" : "rgba(249,115,22,0.15)",
+            color: message.answerSource === "vector" ? "#22c55e" : message.answerSource === "rag" ? "#3b82f6" : "#f97316",
+            border: `1px solid ${message.answerSource === "vector" ? "#22c55e33" : message.answerSource === "rag" ? "#3b82f633" : "#f9731633"}`,
+          }}>
+            <span style={{ fontSize: 8 }}>{message.answerSource === "vector" ? "✅" : message.answerSource === "rag" ? "🔍" : "⚠️"}</span>
+            {message.answerSource === "vector" ? "Verified Source" : message.answerSource === "rag" ? "Database Match" : "AI General Knowledge"}
+          </div>
+        )}
         {message.media?.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <VideoResultsRow media={message.media} onPlay={onPlayVideo} theme={theme} />
@@ -1087,6 +1101,12 @@ export default function App() {
                 return updated;
               });
             } else if (data.type === "done") {
+              // Store answer source on the message for badge display
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { ...updated[updated.length - 1], content: fullText, media: mediaResults, sources, answerSource: data.answerSource || "unknown" };
+                return updated;
+              });
               speak(fullText.replace(/[⚠️📎🎨]/g, "").slice(0, 400));
             }
           } catch {}
