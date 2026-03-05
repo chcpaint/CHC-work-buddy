@@ -408,6 +408,9 @@ function DocumentLibrary({ token, onToast, refreshKey }) {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [editDoc, setEditDoc] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -415,6 +418,35 @@ function DocumentLibrary({ token, onToast, refreshKey }) {
       .then(d => { setDocs(d.documents || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [filterTab, filterType, refreshKey]);
+
+  const openEdit = (doc) => {
+    setEditDoc(doc);
+    setEditForm({
+      title: doc.title || "",
+      description: doc.description || "",
+      doc_type: doc.doc_type || "other",
+      tab_slug: doc.tab_slug || "",
+      language: doc.language || "en",
+      tags: (doc.tags || []).join(", "),
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    setSaving(true);
+    try {
+      const res = await api(`/api/documents/${editDoc.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      setDocs(prev => prev.map(d => d.id === editDoc.id ? { ...d, ...res.document } : d));
+      onToast("Document updated", "success");
+      setEditDoc(null);
+    } catch (e) {
+      onToast(e.message, "error");
+    }
+    setSaving(false);
+  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -495,6 +527,7 @@ function DocumentLibrary({ token, onToast, refreshKey }) {
               {doc.file_url && (
                 <a href={doc.file_url} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: 11, textDecoration: "none", padding: "4px 8px", border: "1px solid #1e3a5f", borderRadius: 5 }}>View</a>
               )}
+              <button onClick={() => openEdit(doc)} style={{ background: "none", border: "1px solid #3b82f633", borderRadius: 5, color: "#60a5fa", padding: "4px 8px", cursor: "pointer", fontSize: 11 }}>Edit</button>
               <button onClick={() => setDeleteTarget(doc)} style={{ background: "none", border: "1px solid #ef444433", borderRadius: 5, color: "#f87171", padding: "4px 8px", cursor: "pointer", fontSize: 11 }}>Del</button>
             </div>
           </div>
@@ -513,6 +546,33 @@ function DocumentLibrary({ token, onToast, refreshKey }) {
           </div>
         </Modal>
       )}
+
+      {/* Edit document modal */}
+      {editDoc && (
+        <Modal title="Edit Document" onClose={() => setEditDoc(null)} width={560}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <Input label="Title" value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} />
+            <Input label="Description" value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Select label="Document Type" value={editForm.doc_type} onChange={e => setEditForm(p => ({ ...p, doc_type: e.target.value }))}>
+                {DOC_TYPES.map(t => <option key={t} value={t}>{t.replace("_", " ").toUpperCase()}</option>)}
+              </Select>
+              <Select label="Workflow Tab" value={editForm.tab_slug} onChange={e => setEditForm(p => ({ ...p, tab_slug: e.target.value }))}>
+                <option value="">— All Tabs —</option>
+                {TABS.map(t => <option key={t.slug} value={t.slug}>{t.icon} {t.label}</option>)}
+              </Select>
+              <Select label="Language" value={editForm.language} onChange={e => setEditForm(p => ({ ...p, language: e.target.value }))}>
+                {LANGS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+              </Select>
+              <Input label="Tags (comma-separated)" value={editForm.tags} onChange={e => setEditForm(p => ({ ...p, tags: e.target.value }))} placeholder="safety, PPE, primer..." />
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+              <Btn variant="secondary" onClick={() => setEditDoc(null)}>Cancel</Btn>
+              <Btn variant="success" onClick={handleSaveEdit} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -526,6 +586,11 @@ function MediaManager({ token, onToast, refreshKey }) {
   const [file, setFile] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", mediaType: "video", tabSlug: "", language: "en", fileUrl: "", tags: "", keywords: "", transcript: "" });
   const [uploading, setUploading] = useState(false);
+  const [editMedia, setEditMedia] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api("/api/media?limit=50")
@@ -580,6 +645,51 @@ function MediaManager({ token, onToast, refreshKey }) {
       onToast(e.message, "error");
     }
     setUploading(false);
+  };
+
+  const openMediaEdit = (m) => {
+    setEditMedia(m);
+    setEditForm({
+      title: m.title || "",
+      description: m.description || "",
+      media_type: m.media_type || "video",
+      tab_slug: m.tab_slug || "",
+      language: m.language || "en",
+      tags: (m.tags || []).join(", "),
+      keywords: (m.keywords || []).join(", "),
+      transcript: m.transcript || "",
+      file_url: m.file_url || "",
+    });
+  };
+
+  const handleSaveMediaEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const res = await api(`/api/media/${editMedia.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      setMedia(prev => prev.map(m => m.id === editMedia.id ? { ...m, ...res.media } : m));
+      onToast("Media updated", "success");
+      setEditMedia(null);
+    } catch (e) {
+      onToast(e.message, "error");
+    }
+    setSavingEdit(false);
+  };
+
+  const handleDeleteMedia = async () => {
+    setDeleting(true);
+    try {
+      await api(`/api/media/${deleteTarget.id}`, { method: "DELETE" });
+      setMedia(prev => prev.filter(m => m.id !== deleteTarget.id));
+      onToast("Media removed", "success");
+    } catch (e) {
+      onToast(e.message, "error");
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   const mediaTypeIcon = { video: "🎬", slideshow: "📊", image: "🖼️" };
@@ -700,13 +810,68 @@ function MediaManager({ token, onToast, refreshKey }) {
                   <TabBadge slug={m.tab_slug} />
                   <div style={{ color: "#334155", fontSize: 10 }}>{ago(m.created_at)}</div>
                 </div>
-                {m.file_url && (
-                  <a href={m.file_url} target="_blank" rel="noreferrer" style={{ display: "block", marginTop: 10, color: "#3b82f6", fontSize: 11, textDecoration: "none" }}>↗ View / Play</a>
-                )}
+                <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
+                  {m.file_url && (
+                    <a href={m.file_url} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", fontSize: 11, textDecoration: "none" }}>↗ View</a>
+                  )}
+                  <div style={{ flex: 1 }} />
+                  <button onClick={() => openMediaEdit(m)} style={{ background: "none", border: "1px solid #3b82f633", borderRadius: 5, color: "#60a5fa", padding: "3px 8px", cursor: "pointer", fontSize: 10 }}>Edit</button>
+                  <button onClick={() => setDeleteTarget(m)} style={{ background: "none", border: "1px solid #ef444433", borderRadius: 5, color: "#f87171", padding: "3px 8px", cursor: "pointer", fontSize: 10 }}>Del</button>
+                </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Delete media confirm modal */}
+      {deleteTarget && (
+        <Modal title="Confirm Delete" onClose={() => setDeleteTarget(null)} width={440}>
+          <p style={{ color: "#94a3b8", fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+            Are you sure you want to remove <strong style={{ color: "#e2e8f0" }}>"{deleteTarget.title}"</strong>? It will no longer appear in the media library or search results.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <Btn variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Btn>
+            <Btn variant="danger" onClick={handleDeleteMedia} disabled={deleting}>{deleting ? "Deleting..." : "Delete Media"}</Btn>
+          </div>
+        </Modal>
+      )}
+
+      {/* Edit media modal */}
+      {editMedia && (
+        <Modal title="Edit Media" onClose={() => setEditMedia(null)} width={580}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <Input label="Title" value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} />
+            <Input label="Description" value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} />
+            <Input label="File / Embed URL" value={editForm.file_url} onChange={e => setEditForm(p => ({ ...p, file_url: e.target.value }))} placeholder="https://..." />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Select label="Media Type" value={editForm.media_type} onChange={e => setEditForm(p => ({ ...p, media_type: e.target.value }))}>
+                <option value="video">Video</option>
+                <option value="slideshow">Slideshow</option>
+                <option value="image">Image</option>
+              </Select>
+              <Select label="Workflow Tab" value={editForm.tab_slug} onChange={e => setEditForm(p => ({ ...p, tab_slug: e.target.value }))}>
+                <option value="">— All Tabs —</option>
+                {TABS.map(t => <option key={t.slug} value={t.slug}>{t.icon} {t.label}</option>)}
+              </Select>
+              <Select label="Language" value={editForm.language} onChange={e => setEditForm(p => ({ ...p, language: e.target.value }))}>
+                {LANGS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+              </Select>
+            </div>
+            <Input label="Tags (comma-separated)" value={editForm.tags} onChange={e => setEditForm(p => ({ ...p, tags: e.target.value }))} placeholder="body filler, repair, panel..." />
+            <Input label="Keywords (comma-separated)" value={editForm.keywords} onChange={e => setEditForm(p => ({ ...p, keywords: e.target.value }))} placeholder="Bondo, USC Duraglass, polyester..." />
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <label style={{ color: "#64748b", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 700 }}>Transcript / Notes</label>
+              <textarea value={editForm.transcript} onChange={e => setEditForm(p => ({ ...p, transcript: e.target.value }))}
+                rows={3} placeholder="Paste video transcript or step list..."
+                style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #1e3a5f", background: "rgba(10,18,32,0.6)", color: "#e2e8f0", fontSize: 13, outline: "none", fontFamily: "'Barlow', sans-serif", resize: "vertical" }} />
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+              <Btn variant="secondary" onClick={() => setEditMedia(null)}>Cancel</Btn>
+              <Btn variant="success" onClick={handleSaveMediaEdit} disabled={savingEdit}>{savingEdit ? "Saving..." : "Save Changes"}</Btn>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
