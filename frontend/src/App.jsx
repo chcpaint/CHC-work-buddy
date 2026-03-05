@@ -732,6 +732,20 @@ export default function App() {
         body: JSON.stringify({ message: text, sessionId, tabSlug: activeTab, language, voiceInput: !!overrideText }),
       });
 
+      // Handle auth errors — sign out if token expired
+      if (res.status === 401) {
+        localStorage.removeItem("bsai_token");
+        setToken(null);
+        setUser(null);
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: "Your session has expired. Please sign in again.", sources: [] };
+          return updated;
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
