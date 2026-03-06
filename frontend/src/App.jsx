@@ -1750,7 +1750,7 @@ export default function App() {
                     ? `${learningGuides.length} guide${learningGuides.length !== 1 ? 's' : ''} · ${learningQuizzes.length} quiz${learningQuizzes.length !== 1 ? 'zes' : ''}`
                     : learningView === "guide"
                     ? `Guide: ${activeGuide?.title?.[language] || "Loading..."}`
-                    : `Quiz: ${activeQuiz?.title?.[language] || "Loading..."}`
+                    : `Quiz: ${activeQuiz?.title?.[language] || activeQuiz?.[`title_${language}`] || activeQuiz?.title_en || activeQuiz?.title?.en || "Loading..."}`
                   : searchResults.length > 0 ? `${searchResults.length} search result${searchResults.length !== 1 ? 's' : ''}` : `${docs.length} resource${docs.length !== 1 ? 's' : ''}`
                 }
               </div>
@@ -1816,10 +1816,10 @@ export default function App() {
                             <div style={{ fontSize: 24 }}>📚</div>
                             <div style={{ flex: 1 }}>
                               <h4 style={{ color: colors.textPrimary, margin: 0, fontWeight: 600, fontSize: 15 }}>
-                                {guide.title?.[language] || guide.title}
+                                {guide.title?.[language] || guide[`title_${language}`] || guide.title_en || guide.title?.en || guide.title || "Guide"}
                               </h4>
                               <p style={{ color: colors.textSecondary, fontSize: 13, margin: "8px 0 0 0", lineHeight: 1.4 }}>
-                                {guide.description?.[language] || guide.description}
+                                {guide.description?.[language] || guide[`description_${language}`] || guide.description_en || guide.description?.en || guide.description || ""}
                               </p>
                               {guide.category && (
                                 <div style={{
@@ -1894,10 +1894,10 @@ export default function App() {
                             <div style={{ fontSize: 24 }}>✓</div>
                             <div style={{ flex: 1 }}>
                               <h4 style={{ color: colors.textPrimary, margin: 0, fontWeight: 600, fontSize: 15 }}>
-                                {quiz.title?.[language] || quiz.title}
+                                {quiz.title?.[language] || quiz[`title_${language}`] || quiz.title_en || quiz.title?.en || quiz.title || "Quiz"}
                               </h4>
                               <p style={{ color: colors.textSecondary, fontSize: 13, margin: "8px 0 0 0", lineHeight: 1.4 }}>
-                                {quiz.description?.[language] || quiz.description}
+                                {quiz.description?.[language] || quiz[`description_${language}`] || quiz.description_en || quiz.description?.en || quiz.description || ""}
                               </p>
                               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                                 {quiz.passed ? (
@@ -2146,7 +2146,7 @@ export default function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 16, borderBottom: `1px solid ${colors.border}` }}>
                     <h3 style={{ color: colors.textPrimary, margin: 0, fontSize: 18, fontWeight: 600 }}>
-                      {activeQuiz.title?.[language] || activeQuiz.title}
+                      {activeQuiz.title?.[language] || activeQuiz[`title_${language}`] || activeQuiz.title_en || activeQuiz.title?.en || activeQuiz.title || "Quiz"}
                     </h3>
                     <button
                       onClick={() => {
@@ -2207,7 +2207,10 @@ export default function App() {
                         <div>
                           <div style={{ padding: 20, background: colors.surfaceLight, borderRadius: 12, marginBottom: 20 }}>
                             <h4 style={{ color: colors.textPrimary, margin: "0 0 16px 0", fontSize: 15, fontWeight: 600 }}>
-                              {quizQuestions[quizCurrentQ].text?.[language] || quizQuestions[quizCurrentQ].text}
+                              {(() => {
+                                const q = quizQuestions[quizCurrentQ];
+                                return q.text?.[language] || q[`question_text_${language}`] || q.question_text_en || q.text?.en || q.text || "";
+                              })()}
                             </h4>
                             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                               {quizQuestions[quizCurrentQ].answers?.map((ans, i) => {
@@ -2241,7 +2244,7 @@ export default function App() {
                                       }
                                     }}
                                   >
-                                    {ans.text?.[language] || ans.text}
+                                    {ans.text?.[language] || ans[`answer_text_${language}`] || ans.answer_text_en || ans.text?.en || ans.text || ""}
                                   </button>
                                 );
                               })}
