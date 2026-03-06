@@ -2694,7 +2694,7 @@ export default function App() {
             <span style={{ fontSize: 10 }}>{showTerms ? "▼" : "▲"}</span>
             Terms & Conditions
           </button>
-          <span style={{ color: colors.textSecondary, fontSize: 10, opacity: 0.6 }}>Refinish AI / Ease AI Works</span>
+          <span style={{ color: colors.textSecondary, fontSize: 10, opacity: 0.6 }}>Refinish AI</span>
         </div>
 
         {showResources && (
@@ -2708,7 +2708,7 @@ export default function App() {
                 Data Sources & Attribution
               </p>
               <p style={{ marginBottom: 12 }}>
-                Body Shop Wiz by Refinish AI (Ease AI Works) uses information from the following public domain and freely accessible sources.
+                Body Shop Wiz by Refinish AI uses information from the following public domain and freely accessible sources.
                 All government publications are U.S. federal works in the public domain.
               </p>
 
@@ -2749,14 +2749,14 @@ export default function App() {
               <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 12, marginTop: 4 }}>
                 <p style={{ fontWeight: 600, color: colors.textPrimary, marginBottom: 6, fontSize: 13 }}>Important Disclaimer</p>
                 <p style={{ fontSize: 11 }}>
-                  Body Shop Wiz is an AI-powered assistant provided by Refinish AI (Ease AI Works). AI-generated content may contain inaccuracies.
+                  Body Shop Wiz is an AI-powered assistant provided by Refinish AI. AI-generated content may contain inaccuracies.
                   This tool does NOT replace professional judgment, OEM repair procedures, hands-on vehicle inspection, or qualified technician expertise.
                   All AI outputs must be independently verified before use in any repair, estimate, or safety-critical decision.
                   By using this application, you agree to our Terms of Use and accept full responsibility for verifying all information before relying on it.
                   Refinish AI is not liable for decisions made based on AI outputs. See full Terms & Conditions for details.
                 </p>
                 <p style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>
-                  © {new Date().getFullYear()} Refinish AI — Ease AI Works. All rights reserved. Powered by Anthropic Claude.
+                  © {new Date().getFullYear()} Refinish AI. All rights reserved. Powered by Anthropic Claude.
                 </p>
               </div>
             </div>
@@ -2783,10 +2783,10 @@ export default function App() {
               <p style={{ marginBottom: 12 }}>By using this App, you acknowledge that automotive body repair and refinishing involves inherent risks including exposure to hazardous chemicals, physical injury, and property damage. You assume all risks associated with acting on information provided by the App.</p>
 
               <p style={{ fontWeight: 600, color: colors.accentPrimary, marginBottom: 4 }}>4. Limitation of Liability</p>
-              <p style={{ marginBottom: 12 }}>Refinish AI, Ease AI Works, and their officers, directors, employees, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from the use of or reliance on this App, including but not limited to: incorrect repairs, safety incidents, environmental violations, regulatory fines, property damage, or personal injury. Total aggregate liability shall not exceed the amount paid for access to the App in the preceding 12 months.</p>
+              <p style={{ marginBottom: 12 }}>Refinish AI and its officers, directors, employees, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from the use of or reliance on this App, including but not limited to: incorrect repairs, safety incidents, environmental violations, regulatory fines, property damage, or personal injury. Total aggregate liability shall not exceed the amount paid for access to the App in the preceding 12 months.</p>
 
               <p style={{ fontWeight: 600, color: colors.accentPrimary, marginBottom: 4 }}>5. Indemnification</p>
-              <p style={{ marginBottom: 12 }}>You agree to indemnify and hold harmless Refinish AI and Ease AI Works from any claims, losses, damages, liabilities, and expenses (including attorneys' fees) arising from your use of the App or reliance on its outputs.</p>
+              <p style={{ marginBottom: 12 }}>You agree to indemnify and hold harmless Refinish AI from any claims, losses, damages, liabilities, and expenses (including attorneys' fees) arising from your use of the App or reliance on its outputs.</p>
 
               <p style={{ fontWeight: 600, color: colors.accentPrimary, marginBottom: 4 }}>6. Data & Privacy</p>
               <p style={{ marginBottom: 12 }}>Queries and interactions may be logged for quality improvement and knowledge gap analysis. No personally identifiable information is shared with third parties. Shop-specific documents uploaded to the App remain the property of the uploading party.</p>
@@ -2795,7 +2795,7 @@ export default function App() {
               <p style={{ marginBottom: 12 }}>By creating an account or using the App, you agree to these Terms & Conditions in their entirety. Refinish AI reserves the right to update these terms at any time. Continued use constitutes acceptance of updated terms.</p>
 
               <p style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}>
-                © {new Date().getFullYear()} Refinish AI — Ease AI Works. All rights reserved. Contact: support@easeaiworks.com
+                © {new Date().getFullYear()} Refinish AI. All rights reserved. Contact: support@refinishai.com
               </p>
             </div>
           </div>
