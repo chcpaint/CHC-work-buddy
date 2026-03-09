@@ -2665,19 +2665,19 @@ export default function App() {
       {/* Resources & Attribution Footer Bar */}
       <div id="resources-footer-bar" style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
-        background: `linear-gradient(180deg, ${colors.surface}, ${colors.background})`,
-        borderTop: `2px solid ${colors.accentPrimary}40`,
-        boxShadow: `0 -4px 20px rgba(0,0,0,0.4)`,
+        background: colors.background,
+        borderTop: `2px solid ${colors.accentPrimary}`,
+        boxShadow: `0 -4px 24px rgba(0,0,0,0.6)`,
         transition: "all 0.3s ease",
       }}>
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-          padding: "10px 16px",
+          padding: "10px 16px", background: colors.surface,
         }}>
           <button onClick={() => { setShowResources(p => !p); setShowTerms(false); }} style={{
-            padding: "6px 16px", border: `1px solid ${colors.border}`, borderRadius: 20,
-            background: showResources ? `${colors.accentPrimary}20` : "transparent",
-            color: showResources ? colors.accentPrimary : colors.textSecondary,
+            padding: "6px 16px", border: `1px solid ${showResources ? colors.accentPrimary : colors.border}`, borderRadius: 20,
+            background: showResources ? colors.accentPrimary : "transparent",
+            color: showResources ? "#fff" : colors.textSecondary,
             cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600,
             transition: "all 0.2s",
           }}>
@@ -2685,9 +2685,9 @@ export default function App() {
             Resources & Attribution
           </button>
           <button onClick={() => { setShowTerms(p => !p); setShowResources(false); }} style={{
-            padding: "6px 16px", border: `1px solid ${colors.border}`, borderRadius: 20,
-            background: showTerms ? `${colors.accentPrimary}20` : "transparent",
-            color: showTerms ? colors.accentPrimary : colors.textSecondary, fontSize: 12, fontWeight: 600,
+            padding: "6px 16px", border: `1px solid ${showTerms ? colors.accentPrimary : colors.border}`, borderRadius: 20,
+            background: showTerms ? colors.accentPrimary : "transparent",
+            color: showTerms ? "#fff" : colors.textSecondary, fontSize: 12, fontWeight: 600,
             cursor: "pointer", transition: "all 0.2s",
             display: "flex", alignItems: "center", gap: 6,
           }}>
@@ -2699,10 +2699,17 @@ export default function App() {
 
         {showResources && (
           <div style={{
-            maxHeight: 320, overflowY: "auto", padding: "12px 24px 16px",
+            maxHeight: 380, overflowY: "auto", padding: "0 24px 16px",
             background: colors.background, borderTop: `1px solid ${colors.border}`,
             fontSize: 12, lineHeight: 1.6, color: colors.textSecondary,
           }}>
+            <div style={{ position: "sticky", top: 0, background: colors.background, padding: "12px 0 8px", display: "flex", justifyContent: "flex-end", zIndex: 1 }}>
+              <button onClick={() => setShowResources(false)} style={{
+                background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 8,
+                color: colors.textPrimary, cursor: "pointer", padding: "4px 14px", fontSize: 12, fontWeight: 600,
+                display: "flex", alignItems: "center", gap: 4,
+              }}>✕ Close</button>
+            </div>
             <div style={{ maxWidth: 900, margin: "0 auto" }}>
               <p style={{ fontWeight: 600, color: colors.textPrimary, marginBottom: 8, fontSize: 13 }}>
                 Data Sources & Attribution
@@ -2765,14 +2772,21 @@ export default function App() {
 
         {showTerms && (
           <div style={{
-            maxHeight: 380, overflowY: "auto", padding: "16px 24px 20px",
+            maxHeight: 420, overflowY: "auto", padding: "0 24px 20px",
             background: colors.background, borderTop: `1px solid ${colors.border}`,
             fontSize: 12, lineHeight: 1.7, color: colors.textSecondary,
           }}>
             <div style={{ maxWidth: 900, margin: "0 auto" }}>
-              <p style={{ fontWeight: 700, color: colors.textPrimary, fontSize: 15, marginBottom: 12 }}>
-                Terms & Conditions of Use
-              </p>
+              <div style={{ position: "sticky", top: 0, background: colors.background, padding: "12px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 1 }}>
+                <p style={{ fontWeight: 700, color: colors.textPrimary, fontSize: 15, margin: 0 }}>
+                  Terms & Conditions of Use
+                </p>
+                <button onClick={() => setShowTerms(false)} style={{
+                  background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 8,
+                  color: colors.textPrimary, cursor: "pointer", padding: "4px 14px", fontSize: 12, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 4,
+                }}>✕ Close</button>
+              </div>
               <p style={{ fontWeight: 600, color: colors.accentPrimary, marginBottom: 4 }}>1. AI Disclaimer & Accuracy</p>
               <p style={{ marginBottom: 12 }}>Body Shop Wiz ("the App") uses artificial intelligence. AI-generated responses may contain inaccuracies, hallucinations, or outdated information. All outputs are for informational purposes only and do not constitute professional advice. Users must independently verify all AI responses before making any repair, safety, or business decisions.</p>
 
