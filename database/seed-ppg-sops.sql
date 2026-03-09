@@ -6,33 +6,13 @@
 -- ═══════════════════════════════════════════════════════════════
 
 -- ─── SOP 1: Raw Plastics (Advanced Plastic Bond Method) ──────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Raw Plastics — Advanced Plastic Bond Method',
   'PPG Envirobase procedure for preparing and coating raw (unprimed) plastic parts using SU4901 Clean & Scuff Pad, SU4902 Plastic Adhesion Prep, and SU4903/SUA4903 Advanced Plastic Bond.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'raw plastics', 'plastic', 'adhesion promoter', 'SU4901', 'SU4902', 'SU4903', 'SUA4903', 'envirobase', 'scuff pad', 'plastic adhesion prep', 'advanced plastic bond'],
-  'PPG SOP: Raw Plastics — Advanced Plastic Bond Method (Envirobase High Performance)
-
-IMPORTANT: Sand the plastic part with fine sand paper to identify if it is primed or unprimed (raw). Do not apply adhesion promoters to pre-primed plastic.
-
-Step 1: Clean and Scuff Pad (SU4901)
-• Scrub and clean the substrate thoroughly using the scuff pad side of the sponge.
-• Rinse with water.
-• Blow dry and wipe with a clean cloth.
-• Entire surface must be de-glossed.
-
-Step 2: Plastic Adhesion Prep (SU4902)
-• Apply a light even coat over the entire area, wiping in one direction to minimize product overlap.
-• Allow 3-5 minutes flash time.
-
-Step 3: Advanced Plastic Bond (SU4903 or SUA4903)
-• Apply a light coat of Advanced Plastic Bond.
-• Allow 5 minutes dry time (until completely flashed).
-• Apply flexed ECS A-chromatic sealer with correct G-shade for top coat colour.
-• Apply top coat.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Raw Plastics — Advanced Plastic Bond Method (Envirobase High Performance)\n\nIMPORTANT: Sand the plastic part with fine sand paper to identify if it is primed or unprimed (raw). Do not apply adhesion promoters to pre-primed plastic.\n\nStep 1: Clean and Scuff Pad (SU4901)\n• Scrub and clean the substrate thoroughly using the scuff pad side of the sponge.\n• Rinse with water.\n• Blow dry and wipe with a clean cloth.\n• Entire surface must be de-glossed.\n\nStep 2: Plastic Adhesion Prep (SU4902)\n• Apply a light even coat over the entire area, wiping in one direction to minimize product overlap.\n• Allow 3-5 minutes flash time.\n\nStep 3: Advanced Plastic Bond (SU4903 or SUA4903)\n• Apply a light coat of Advanced Plastic Bond.\n• Allow 5 minutes dry time (until completely flashed).\n• Apply flexed ECS A-chromatic sealer with correct G-shade for top coat colour.\n• Apply top coat.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 -- Insert document chunks for vector search
@@ -44,30 +24,13 @@ FROM public.documents WHERE title = 'PPG SOP: Raw Plastics — Advanced Plastic 
 
 
 -- ─── SOP 2: Raw Plastics (Adhesion Promoter SU470LV Method) ─
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Raw Plastics — Adhesion Promoter Method',
   'PPG Envirobase procedure for preparing raw plastic parts using SU4901 Clean & Scuff Pad and SU470LV Adhesion Promoter with SWX350 waterborne cleaner.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'raw plastics', 'plastic', 'adhesion promoter', 'SU4901', 'SU470LV', 'SWX350', 'envirobase', 'waterborne cleaner'],
-  'PPG SOP: Raw Plastics — Adhesion Promoter Method (Envirobase High Performance)
-
-IMPORTANT: Sand the plastic part with fine sand paper to identify if it is primed or unprimed (raw). Do not apply adhesion promoters to pre-primed plastic.
-
-Step 1: Clean and Scuff Pad (SU4901)
-• Scrub and clean the substrate thoroughly using the scuff pad side of the sponge.
-• Rinse with water.
-• Blow dry and wipe with a clean cloth.
-• Entire surface must be de-glossed.
-• Wash with SWX350 (waterborne cleaner).
-
-Step 2: Adhesion Promoter (SU470LV)
-• Apply a light wet coat of SU470LV adhesion promoter.
-• Allow 5 minutes dry time (until completely flashed).
-• Apply flexed ECS A-chromatic sealer with correct G-shade for top coat colour.
-• Apply top coat.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Raw Plastics — Adhesion Promoter Method (Envirobase High Performance)\n\nIMPORTANT: Sand the plastic part with fine sand paper to identify if it is primed or unprimed (raw). Do not apply adhesion promoters to pre-primed plastic.\n\nStep 1: Clean and Scuff Pad (SU4901)\n• Scrub and clean the substrate thoroughly using the scuff pad side of the sponge.\n• Rinse with water.\n• Blow dry and wipe with a clean cloth.\n• Entire surface must be de-glossed.\n• Wash with SWX350 (waterborne cleaner).\n\nStep 2: Adhesion Promoter (SU470LV)\n• Apply a light wet coat of SU470LV adhesion promoter.\n• Allow 5 minutes dry time (until completely flashed).\n• Apply flexed ECS A-chromatic sealer with correct G-shade for top coat colour.\n• Apply top coat.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -78,27 +41,13 @@ FROM public.documents WHERE title = 'PPG SOP: Raw Plastics — Adhesion Promoter
 
 
 -- ─── SOP 3: Plastic Preparation (Pre-Primed Parts) ──────────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Plastic Preparation — Pre-Primed Parts',
   'PPG Envirobase procedure for preparing pre-primed plastic parts for painting including washing, sanding with P400-P600, and sealer application.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'plastic preparation', 'pre-primed', 'plastic parts', 'P400', 'P600', 'sealer', 'envirobase', 'waterborne cleaner', 'scuff pad'],
-  'PPG SOP: Plastic Preparation — Pre-Primed Plastic Parts (Envirobase High Performance)
-
-IMPORTANT: Sand the plastic part with fine sand paper to identify if it is primed or unprimed (raw). Do not apply adhesion promoters to pre-primed plastic.
-
-Step 1: Wash the repair area with soap and water and then clean with appropriate waterborne cleaner.
-
-Step 2: Sand pre-primed plastic with P400-P600 dry sandpaper by machine or by hand. Use grey scuff pad on edges.
-
-Step 3: Re-clean with appropriate waterborne cleaner.
-
-Step 4: Apply sealer with correct G-shade.
-
-Step 5: Apply topcoat.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Plastic Preparation — Pre-Primed Plastic Parts (Envirobase High Performance)\n\nIMPORTANT: Sand the plastic part with fine sand paper to identify if it is primed or unprimed (raw). Do not apply adhesion promoters to pre-primed plastic.\n\nStep 1: Wash the repair area with soap and water and then clean with appropriate waterborne cleaner.\n\nStep 2: Sand pre-primed plastic with P400-P600 dry sandpaper by machine or by hand. Use grey scuff pad on edges.\n\nStep 3: Re-clean with appropriate waterborne cleaner.\n\nStep 4: Apply sealer with correct G-shade.\n\nStep 5: Apply topcoat.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -109,29 +58,13 @@ FROM public.documents WHERE title = 'PPG SOP: Plastic Preparation — Pre-Primed
 
 
 -- ─── SOP 4: Panel Preparation ────────────────────────────────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Panel Preparation',
   'PPG Envirobase 7-step panel preparation procedure including washing, wax and grease removal, sanding progression from P400 to P1000, scuffing, and final cleaning.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'panel preparation', 'panel prep', 'wax and grease remover', 'P400', 'P600', 'P800', 'P1000', 'scuff pad', 'interface pad', 'envirobase', 'de-gloss', 'blend panels'],
-  'PPG SOP: Panel Preparation (Envirobase High Performance)
-
-Step 1: Wash with soap and water.
-
-Step 2: Clean using recommended Wax and Grease Remover.
-
-Step 3: Sand using P400 on primed repairs and factory finishes that WILL be sealed.
-
-Step 4: Sand using P600-P800 on primed repairs and factory finishes that will NOT be sealed.
-
-Step 5: Scuff using a gold or light grey scuff pad. Scuff all edges, body lines and hard-to-reach areas prior to sanding blend panels.
-
-Step 6: Machine sand using interface pad and P800-P1000 to de-gloss panel thoroughly.
-
-Step 7: Final clean using appropriate pre-cleaner and wipe off thoroughly with lint free cloth.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Panel Preparation (Envirobase High Performance)\n\nStep 1: Wash with soap and water.\n\nStep 2: Clean using recommended Wax and Grease Remover.\n\nStep 3: Sand using P400 on primed repairs and factory finishes that WILL be sealed.\n\nStep 4: Sand using P600-P800 on primed repairs and factory finishes that will NOT be sealed.\n\nStep 5: Scuff using a gold or light grey scuff pad. Scuff all edges, body lines and hard-to-reach areas prior to sanding blend panels.\n\nStep 6: Machine sand using interface pad and P800-P1000 to de-gloss panel thoroughly.\n\nStep 7: Final clean using appropriate pre-cleaner and wipe off thoroughly with lint free cloth.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -142,29 +75,13 @@ FROM public.documents WHERE title = 'PPG SOP: Panel Preparation';
 
 
 -- ─── SOP 5: Primer Surfacer Sanding ──────────────────────────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Primer Surfacer Sanding',
   'PPG Envirobase 6-step primer surfacer sanding procedure using guide coat technique with P320, P400, and P600 grit progression.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'primer surfacer', 'sanding', 'guide coat', 'P320', 'P400', 'P600', 'interface pad', 'sanding block', 'envirobase', 'etch primer', 'wet-on-wet sealer'],
-  'PPG SOP: Primer Surfacer Sanding (Envirobase High Performance)
-
-Step 1: Make sure all parts to be painted are present and that repairs are understood.
-
-Step 2: Apply guide coat to primed area for final sanding.
-
-Step 3: Sand guide coated area using P320 and a flat sanding block.
-
-Step 4: Apply guide coat, machine sand using interface pad and P400.
-
-Step 5: Machine sand using interface pad and P600, if sealer is NOT to be used.
-
-NOTE: If bare metal, body filler or guide coat remains, reapply etch primer and primer surfacer as needed.
-
-Step 6: Clean the area with appropriate pre-cleaner before wet-on-wet sealer application. Dry thoroughly.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Primer Surfacer Sanding (Envirobase High Performance)\n\nStep 1: Make sure all parts to be painted are present and that repairs are understood.\n\nStep 2: Apply guide coat to primed area for final sanding.\n\nStep 3: Sand guide coated area using P320 and a flat sanding block.\n\nStep 4: Apply guide coat, machine sand using interface pad and P400.\n\nStep 5: Machine sand using interface pad and P600, if sealer is NOT to be used.\n\nNOTE: If bare metal, body filler or guide coat remains, reapply etch primer and primer surfacer as needed.\n\nStep 6: Clean the area with appropriate pre-cleaner before wet-on-wet sealer application. Dry thoroughly.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -175,26 +92,13 @@ FROM public.documents WHERE title = 'PPG SOP: Primer Surfacer Sanding';
 
 
 -- ─── SOP 6: Etch Primer and Primer Surfacer Application ──────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Etch Primer and Primer Surfacer Application',
   'PPG Envirobase procedure for applying etch primer over bare metal and primer surfacer using the reverse priming method (lightest coat first, heaviest coat last).',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'etch primer', 'primer surfacer', 'reverse priming', 'bare metal', 'G-shade', 'high solids primer', 'envirobase', 'flash time'],
-  'PPG SOP: Etch Primer and Primer Surfacer Application (Envirobase High Performance)
-
-PREPARATION PROCEDURE — Etch Primer:
-Step 1: Apply 2 medium coats of etch primer over bare metal areas. Let flash for 15 minutes before primer surfacer application.
-
-APPLICATION PROCEDURE — Primer Surfacer:
-Step 1: Apply high solids primer. Use correct G-shade and mix as a surfacer for optimal performance.
-
-Step 2: When applying, first coat should be the lightest and last coat the heaviest. Use reverse priming method:
-• 1st Coat — Lightest
-• 2nd Coat — Medium
-• 3rd Coat — Heaviest
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Etch Primer and Primer Surfacer Application (Envirobase High Performance)\n\nPREPARATION PROCEDURE — Etch Primer:\nStep 1: Apply 2 medium coats of etch primer over bare metal areas. Let flash for 15 minutes before primer surfacer application.\n\nAPPLICATION PROCEDURE — Primer Surfacer:\nStep 1: Apply high solids primer. Use correct G-shade and mix as a surfacer for optimal performance.\n\nStep 2: When applying, first coat should be the lightest and last coat the heaviest. Use reverse priming method:\n• 1st Coat — Lightest\n• 2nd Coat — Medium\n• 3rd Coat — Heaviest\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -205,27 +109,13 @@ FROM public.documents WHERE title = 'PPG SOP: Etch Primer and Primer Surfacer Ap
 
 
 -- ─── SOP 7: Body Filler and Primer Preparation ───────────────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Body Filler and Primer Preparation',
   'PPG Envirobase 6-step procedure for body filler application and primer preparation including filler shaping, guide coat, putty, and back sanding.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'body filler', 'primer preparation', 'P80', 'P120', 'P180', 'P240', 'P320', 'P400', 'guide coat', 'putty', 'polyester putty', 'feather edge', 'envirobase', 'wax and grease remover'],
-  'PPG SOP: Body Filler and Primer Preparation (Envirobase High Performance)
-
-Step 1: Wash the repair area with soap and water and then clean with Wax and Grease Remover.
-
-Step 2: Sand low spots and hard-to-reach areas with P80, feather edge repair with P180 and apply body filler over bare metal.
-
-Step 3: Sand using appropriately sized sanding block and rough shape body filler using P80-120. Using guide coat, final sand body filler using P180.
-
-Step 4: Inspect for pin holes and undesired scratches from paint edge to paint edge and reapply filler as needed. Application of body filler or polyester putty may be needed.
-
-Step 5: Block sand putty using P240. Check feathered area and re-sand if required.
-
-Step 6: Back sand 6" to 8" away from the edge of the repair using P320 on a DA with an interface pad or P400 by hand.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Body Filler and Primer Preparation (Envirobase High Performance)\n\nStep 1: Wash the repair area with soap and water and then clean with Wax and Grease Remover.\n\nStep 2: Sand low spots and hard-to-reach areas with P80, feather edge repair with P180 and apply body filler over bare metal.\n\nStep 3: Sand using appropriately sized sanding block and rough shape body filler using P80-120. Using guide coat, final sand body filler using P180.\n\nStep 4: Inspect for pin holes and undesired scratches from paint edge to paint edge and reapply filler as needed. Application of body filler or polyester putty may be needed.\n\nStep 5: Block sand putty using P240. Check feathered area and re-sand if required.\n\nStep 6: Back sand 6\" to 8\" away from the edge of the repair using P320 on a DA with an interface pad or P400 by hand.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -236,32 +126,13 @@ FROM public.documents WHERE title = 'PPG SOP: Body Filler and Primer Preparation
 
 
 -- ─── SOP 8: Waterborne Tri-Coat Repair — Standard Blending ──
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Waterborne Tri-Coat Repair — Standard Colour Blending',
   'PPG Envirobase tri-coat repair process showing standard repair with colour blending vs zone/section refinishing. Covers clearcoat, mid-coat, transition, and ground coat layers.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'tri-coat', 'three stage', 'colour blending', 'color blending', 'zone refinishing', 'section refinishing', 'clearcoat', 'mid-coat', 'ground coat', 'transition layer', 'envirobase', 'waterborne'],
-  'PPG SOP: Waterborne Tri-Coat Repair Process — Standard Repair with Colour Blending (Envirobase High Performance)
-
-STANDARD REPAIR WITH COLOUR BLENDING:
-Layer structure (from top to bottom):
-• Clearcoat
-• Mid-Coat Layer
-• Transition Layer
-• Ground Coat Layer
-• Repaired Area
-
-The colour blend transitions across adjacent panels using the mid-coat and transition layers.
-
-"ZONE" OR SECTION REFINISHING (No colour blending):
-• Apply colour to the entire "ZONE" and then clearcoat all panels to panel edge.
-• Use the next body line or breakpoint as the boundary.
-
-WHEN TO USE ZONE REFINISHING:
-"Zone" or Section Refinishing is considered when existing finish varies in blotchiness and/or opaqueness in multiple panels on a vehicle. Depending on the vehicle/repair area, body lines, fenders, mouldings, etc. may be used to "disguise" or "hide" the colour blend rather than a typical/traditional colour blend in the middle of a panel.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com'
+  '{"full_content": "PPG SOP: Waterborne Tri-Coat Repair Process — Standard Repair with Colour Blending (Envirobase High Performance)\n\nSTANDARD REPAIR WITH COLOUR BLENDING:\nLayer structure (from top to bottom):\n• Clearcoat\n• Mid-Coat Layer\n• Transition Layer\n• Ground Coat Layer\n• Repaired Area\n\nThe colour blend transitions across adjacent panels using the mid-coat and transition layers.\n\n\"ZONE\" OR SECTION REFINISHING (No colour blending):\n• Apply colour to the entire \"ZONE\" and then clearcoat all panels to panel edge.\n• Use the next body line or breakpoint as the boundary.\n\nWHEN TO USE ZONE REFINISHING:\n\"Zone\" or Section Refinishing is considered when existing finish varies in blotchiness and/or opaqueness in multiple panels on a vehicle. Depending on the vehicle/repair area, body lines, fenders, mouldings, etc. may be used to \"disguise\" or \"hide\" the colour blend rather than a typical/traditional colour blend in the middle of a panel.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com"}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -272,41 +143,13 @@ FROM public.documents WHERE title = 'PPG SOP: Waterborne Tri-Coat Repair — Sta
 
 
 -- ─── SOP 9: Waterborne Tri-Coat Repair — Flowchart ──────────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: Waterborne Tri-Coat Repair — Process Flowchart',
   'PPG Envirobase detailed tri-coat repair process flowchart covering gray shade undercoat, groundcoat, blending decision, transition layers, mid-coat, and clearcoat application.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'tri-coat', 'three stage', 'flowchart', 'process', 'blending', 'transition layer', 'effect coat', 'mid-coat', 'groundcoat', 'gray shade', 'RTS', 'envirobase', 'waterborne', 'let-down tool'],
-  'PPG SOP: Waterborne Tri-Coat Repair Process — Flowchart (Envirobase High Performance)
-
-PROCESS FLOW:
-
-1. Gray Shade Undercoat Layer
-
-2. Groundcoat Layer (Coverage Coats + Control Coat if required)
-
-3. DECISION: Blending?
-
-IF YES (Blending):
-• Use 1 Part RTS Groundcoat Colour
-• Apply 1 "Transition Layer" (to be applied as an "Effect Coat")
-• Tack off "Blend Areas" BEFORE proceeding to the next step
-
-OPTIONAL: If a 2nd "Transition Layer" is needed to step the blend out further:
-• Create/mix 1 part RTS Transition Colour (created above) to 1 part RTS Mid-Coat Colour
-• Apply 2nd "Transition Layer" (to be applied as an "Effect Coat")
-• Tack off "Blend Areas" BEFORE proceeding to the next step
-
-IF NO (Not Blending):
-• Use 1 Part RTS Mid-Coat Colour
-
-4. Mid-Coat (Effects Coat + Control Coat if required)
-
-5. Clearcoat
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com
-Scan QR code to view "Building a Let-Down Tool" Process.'
+  '{"full_content": "PPG SOP: Waterborne Tri-Coat Repair Process — Flowchart (Envirobase High Performance)\n\nPROCESS FLOW:\n\n1. Gray Shade Undercoat Layer\n\n2. Groundcoat Layer (Coverage Coats + Control Coat if required)\n\n3. DECISION: Blending?\n\nIF YES (Blending):\n• Use 1 Part RTS Groundcoat Colour\n• Apply 1 \"Transition Layer\" (to be applied as an \"Effect Coat\")\n• Tack off \"Blend Areas\" BEFORE proceeding to the next step\n\nOPTIONAL: If a 2nd \"Transition Layer\" is needed to step the blend out further:\n• Create/mix 1 part RTS Transition Colour (created above) to 1 part RTS Mid-Coat Colour\n• Apply 2nd \"Transition Layer\" (to be applied as an \"Effect Coat\")\n• Tack off \"Blend Areas\" BEFORE proceeding to the next step\n\nIF NO (Not Blending):\n• Use 1 Part RTS Mid-Coat Colour\n\n4. Mid-Coat (Effects Coat + Control Coat if required)\n\n5. Clearcoat\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com\nScan QR code to view \"Building a Let-Down Tool\" Process."}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
@@ -317,26 +160,13 @@ FROM public.documents WHERE title = 'PPG SOP: Waterborne Tri-Coat Repair — Pro
 
 
 -- ─── SOP 10: EPW115 Waterborne Primer Application ────────────
-INSERT INTO public.documents (title, description, doc_type, tab_slug, keywords, full_content) VALUES (
+INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata) VALUES (
   'PPG SOP: EPW115 Waterborne Primer Application',
   'PPG Envirobase 5-step procedure for EPW115 waterborne primer application including mixing ratio, wet coat application, air drying, sanding, and infrared curing guidelines.',
   'procedure',
   'painting',
   ARRAY['ppg', 'sop', 'EPW115', 'waterborne primer', 'T494', 'primer application', 'bare metal', 'infrared', 'air drying', 'envirobase', 'sanding'],
-  'PPG SOP: EPW115 Waterborne Primer Application (Envirobase High Performance)
-
-Step 1: Shake waterborne primer thoroughly prior to mixing (10% T494).
-
-Step 2: Apply 3 to 5 wet coats (may be applied directly over bare metal areas).
-
-Step 3: Blow dry using air drying equipment for approximately 3 to 5 minutes between coats or until uniformly dull.
-
-Step 4: Sand after 30 minutes at 21°C / 70°F metal temperature. Follow standard sanding procedures.
-
-Step 5: Infrared can be used once flashed. Do not exceed 38°C / 100°F metal temperature.
-
-Source: PPG Envirobase High Performance — ca.ppgrefinish.com
-Scan QR code to view the Product Data Sheet for EPW115 Waterborne Primer.'
+  '{"full_content": "PPG SOP: EPW115 Waterborne Primer Application (Envirobase High Performance)\n\nStep 1: Shake waterborne primer thoroughly prior to mixing (10% T494).\n\nStep 2: Apply 3 to 5 wet coats (may be applied directly over bare metal areas).\n\nStep 3: Blow dry using air drying equipment for approximately 3 to 5 minutes between coats or until uniformly dull.\n\nStep 4: Sand after 30 minutes at 21°C / 70°F metal temperature. Follow standard sanding procedures.\n\nStep 5: Infrared can be used once flashed. Do not exceed 38°C / 100°F metal temperature.\n\nSource: PPG Envirobase High Performance — ca.ppgrefinish.com\nScan QR code to view the Product Data Sheet for EPW115 Waterborne Primer."}'::jsonb
 );
 
 INSERT INTO public.document_chunks (document_id, chunk_index, content, metadata)
