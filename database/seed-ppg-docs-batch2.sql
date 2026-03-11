@@ -3,7 +3,25 @@
 -- Documents categorized by repair process sections
 -- Total documents: 72
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('200806 X-Factor Special', 'X-Factor special color formula for custom and specialty applications.', 'tech_sheet', 'painting', ARRAY['unique_finishes'], '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb, 'Bulletin 576 June 2008
+-- Document: 200806 X-Factor Special
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    '200806 X-Factor Special',
+    'X-Factor special color formula for custom and specialty applications.',
+    'tech_sheet',
+    'painting',
+    ARRAY['unique_finishes'],
+    '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Bulletin 576 June 2008
 Special Announcement – Please read!
 (cid:1)(cid:1)(cid:1)(cid:1)(cid:2)(cid:2)(cid:2)(cid:2)(cid:3)(cid:3)(cid:3)(cid:3)(cid:4)(cid:4)(cid:4)(cid:4)(cid:5)(cid:5)(cid:5)(cid:5)(cid:6)(cid:6)(cid:6)(cid:6)(cid:7)(cid:7)(cid:7)(cid:7)(cid:8)(cid:8)(cid:8)(cid:8)(cid:6)(cid:6)(cid:6)(cid:6)(cid:9)(cid:9)(cid:9)(cid:9)(cid:10)(cid:10)(cid:10)(cid:10)(cid:4)(cid:4)(cid:4)(cid:4)(cid:11)(cid:11)(cid:11)(cid:11)(cid:4)(cid:4)(cid:4)(cid:4)(cid:5)(cid:5)(cid:5)(cid:5)(cid:9)(cid:9)(cid:9)(cid:9)(cid:12)(cid:12)(cid:12)(cid:12)(cid:13)(cid:13)(cid:13)(cid:13)(cid:6)(cid:6)(cid:6)(cid:6)(cid:5)(cid:5)(cid:5)(cid:5)(cid:14)(cid:14)(cid:14)(cid:14)(cid:13)(cid:13)(cid:13)(cid:13)(cid:15)(cid:15)(cid:15)(cid:15)(cid:7)(cid:7)(cid:7)(cid:7)(cid:11)(cid:11)(cid:11)(cid:11)(cid:9)(cid:9)(cid:9)(cid:9)(cid:16)(cid:16)(cid:16)(cid:16)(cid:8)(cid:8)(cid:8)(cid:8)(cid:17)(cid:17)(cid:17)(cid:17)(cid:7)(cid:7)(cid:7)(cid:7)(cid:8)(cid:8)(cid:8)(cid:8)(cid:18)(cid:18)(cid:18)(cid:18)(cid:13)(cid:13)(cid:13)(cid:13)(cid:2)(cid:2)(cid:2)(cid:2)(cid:13)(cid:13)(cid:13)(cid:13)(cid:8)(cid:8)(cid:8)(cid:8)(cid:6)(cid:6)(cid:6)(cid:6)(cid:9)(cid:9)(cid:9)(cid:9)
 Model and Year information for Specials
@@ -40,9 +58,29 @@ Manager.
 Enclosed are Special flyers to help you communicate this change to your customers. To receive more flyers,
 part # ARFY105 can be ordered Online or go to the Color Tools section of www.PPGRefinish.com.
 PPG Color Marketing
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Application Conditions', 'Environmental and application conditions for optimal paint application.', 'product_info', 'painting', ARRAY['pre_paint_considerations'], '{"process_section": "pre-paint-considerations", "source": "PPG"}'::jsonb, 'ENVIROBASE® HP basecoat
+
+-- Document: Application Conditions
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Application Conditions',
+    'Environmental and application conditions for optimal paint application.',
+    'tech_sheet',
+    'painting',
+    ARRAY['pre_paint_considerations'],
+    '{"process_section": "pre-paint-considerations", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'ENVIROBASE® HP basecoat
 Application Conditions
 Air movement, temperature and relative humidity are all factors that
 directly impact the performance of waterborne technology. Having control
@@ -69,9 +107,29 @@ Too cold
 20%
 Poor conditions
 5%
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('CPCPB418 CRE-X21 Primers', 'Application procedures and specifications for CRE-X21 primer series.', 'reference', 'painting', ARRAY['primer_application', 'primer'], '{"process_section": "primer-application", "source": "PPG"}'::jsonb, 'CPCPB418
+
+-- Document: CPCPB418 CRE-X21 Primers
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'CPCPB418 CRE-X21 Primers',
+    'Application procedures and specifications for CRE-X21 primer series.',
+    'other',
+    'painting',
+    ARRAY['primer_application', 'primer'],
+    '{"process_section": "primer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'CPCPB418
 2.1 VOC Corrosion Resistant Epoxy Primers
 CRE-121 White Epoxy Primer
 CRE-X21 Series Primers
@@ -288,9 +346,29 @@ Strongsville, OH 44149 Mississauga, Ontario L5J 1K5
 © 2017 PPG Industries www.ppgcommercialcoatings.com Part No. CPCPB418 04/2017
 The PPG Logo is a registered trademark of PPG Industries Ohio, Inc.
 Bonderite is a registered trademark of Henkel AG & Co., LGaA.
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('DOX440 Waterborne Gun Chart', 'Spray gun specifications and recommendations for waterborne systems.', 'reference', 'painting', ARRAY['equipment_and_tools', 'waterborne', 'equipment'], '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb, 'Waterborne Gun Chart
+
+-- Document: DOX440 Waterborne Gun Chart
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'DOX440 Waterborne Gun Chart',
+    'Spray gun specifications and recommendations for waterborne systems.',
+    'other',
+    'painting',
+    ARRAY['equipment_and_tools', 'waterborne', 'equipment'],
+    '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Waterborne Gun Chart
 Spray Gun Model Nozzle Set Coverage Coat Control Coat
 (Fluid Tip Size) Pressure Pressure
 Standard Condi(cid:415)ons: 68˚‐90⁰F (20⁰‐32⁰C) / 60% R.H. or less
@@ -389,9 +467,29 @@ regulators approved by the spray gun manufacturer.
  PPG Industries does NOT endorse any par(cid:415)cular type or brand of applica(cid:415)on equipment.
 The PPG logo and Envirobase are registered trademarks of PPG Industries Ohio, Inc.
 Trademarks of other companies used in this document are the property of their respective owners Part # DOX440-09232016
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-115 EPW115 Speed Prime', '1K waterborne speed prime application guide and technical data.', 'reference', 'painting', ARRAY['primer_application', 'eb-115'], '{"process_section": "primer-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-115 EPW115 Speed Prime
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-115 EPW115 Speed Prime',
+    '1K waterborne speed prime application guide and technical data.',
+    'other',
+    'painting',
+    ARRAY['primer_application', 'eb-115'],
+    '{"process_section": "primer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 EPW115 Waterborne Speed Prime
 Product Description
 EPW115 Waterborne Speed Prime is a gray primer-surfacer based on the latest 1K waterborne
@@ -498,7 +596,7 @@ used. Before opening the packages, be sure you understand the warning messages o
 MSDS’s of all the components, since the mixture will have the hazards of all its parts.
 (cid:120) Improper handling and use, for example, poor spray technique, inadequate engineering controls and/or
 lack of proper Personal Protective Equipment (PPE), may result in hazardous conditions or injury.
-(cid:120) Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+(cid:120) Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
 (cid:120) Provide adequate ventilation for health and fire hazard control.
 (cid:120) Follow company policy, product MSDS and respirator manufacturer’s recommendations for selection
 and proper use of respiratory protection. Be sure employees are adequately trained on the safe use of
@@ -521,16 +619,36 @@ Strongsville, OH 44149 Mississauga, Ontario L5J 1K5 p p r o i s n t t - e c d o 
 Envirobase,OneChoice,Detlron,PaintManager, Global Refinish SystemandBringing Innovation to the surface are trademarks of PPG
 Industries of Ohio, Inc.
 Page 4 EB-115
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-143 Envirobase HP Basecoat', 'High-performance waterborne basecoat specifications and application.', 'reference', 'painting', ARRAY['basecoats_and_tricoats', 'eb-143', 'basecoat'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-143 Envirobase HP Basecoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-143 Envirobase HP Basecoat',
+    'High-performance waterborne basecoat specifications and application.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats', 'eb-143', 'basecoat'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 ®
 ENVIROBASE High Performance Waterborne Basecoat
 Product Description
 Envirobase High Performance is a premium waterborne color system for use in repair and repainting of motor
 vehicles. Industry leading color capability is easily achieved when applied as part of a two or three-stage basecoat/
 clearcoat paint process. Mixed Envirobase High Performance color reproduces the original OEM solid, metallic,
-mica, or XIRALLIC® paint finish of virtually all OEM manufacturer''s worldwide.
+mica, or XIRALLIC® paint finish of virtually all OEM manufacturer''''s worldwide.
 Envirobase High Performance products are engineered to reduce volatile organic compounds (VOC) and will
 exceed all of today’s legislative VOC restrictions throughout the United States and Canada.
 Envirobase High Performance waterborne color system is also capable of producing internal colors for under the
@@ -774,9 +892,29 @@ Exempt vol. % 0.0 0.0 0.0 0.0
 RTS Solids vol. % 13.1-27.0 11.9-24.5 10.9-22.5 10.1-20.8
 RTS Solids wt. % 13.8-41.5 12.5-38.5 11.5-35.7 10.6-33.4
 Color : T492 : Color : T492 :
-RTS Combinations', true) ON CONFLICT DO NOTHING;
+RTS Combinations')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-145 Internal Repair System', 'Internal repair system basecoat for complete color matching.', 'reference', 'painting', ARRAY['basecoats_and_tricoats', 'eb-145'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-145 Internal Repair System
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-145 Internal Repair System',
+    'Internal repair system basecoat for complete color matching.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats', 'eb-145'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 Internal Repair System
 PRODUCT DESCRIPTION
 Envirobase High Performance Internal Repair System is designed to provide a simple repair process
@@ -877,7 +1015,7 @@ hazards of all its parts.
 • Improper handling and use, for example, poor spray technique, inadequate engineering
 controls and/or lack of proper Personal Protective Equipment (PPE), may result in hazardous
 conditions or injury.
-• Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+• Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
 • Provide adequate ventilation for health and fire hazard control.
 • Follow company policy, product MSDS and respirator manufacturer’s recommendations for
 selection and proper use of respiratory protection. Be sure employees are adequately trained
@@ -898,9 +1036,29 @@ representations or warranties as to performance, results, or fitness for any int
 nor does PPG Industries warrant freedom from patent infringement in the use of any
 formula or process set forth herein. Mississauga, Ontario L5J 1K5
 © 2010 PPG Industries 4 EB-145 4/10
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-200 ECS21/ECS27 A-Chromatic Sealer', 'A-chromatic sealer specifications and application guide.', 'reference', 'painting', ARRAY['sealer_application', 'eb-200', 'sealer'], '{"process_section": "sealer-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-200 ECS21/ECS27 A-Chromatic Sealer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-200 ECS21/ECS27 A-Chromatic Sealer',
+    'A-chromatic sealer specifications and application guide.',
+    'other',
+    'painting',
+    ARRAY['sealer_application', 'eb-200', 'sealer'],
+    '{"process_section": "sealer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 ECS21 White, ECS27 Black A-Chromatic LV Sealer
 SPECIAL
 Product Description
@@ -1068,9 +1226,29 @@ www.ppgrefinish.com
 © 2019 PPG Industries, Inc. All rights reserved
 The PPG Logo, Envirobase and OneChoice are registered trademarks and We protect and beautify the world is a trademark of PPG Industries Ohio, Inc.
 4 SPEC EB-200 11/19
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-300 ECP35 High Production Surfacer', 'High-production waterborne surfacer specifications and application guide.', 'reference', 'painting', ARRAY['surfacer_application', 'eb-300', 'surfacer'], '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-300 ECP35 High Production Surfacer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-300 ECP35 High Production Surfacer',
+    'High-production waterborne surfacer specifications and application guide.',
+    'other',
+    'painting',
+    ARRAY['surfacer_application', 'eb-300', 'surfacer'],
+    '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 ECP35 2.1 VOC High Production Surfacer
 Product Description
 2.1 VOC high production surfacer is a premium quality, high build, low VOC primer surfacer specifically
@@ -1232,9 +1410,29 @@ www.ppgrefinish.com
 The PPG Logo, Envirobase, OneChoice and We protect and beautify the world are registered trademarks, and the Multiple Cubes Geometric Design is a trademark of PPG
 Industries Ohio, Inc. © 2021 PPG Industries, Inc. All rights reserved.
 4 EB-300 03/22
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-511 Interior Color Repair', 'Interior repair system for spot and panel repair applications.', 'reference', 'painting', ARRAY['basecoats_and_tricoats', 'eb-511'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-511 Interior Color Repair
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-511 Interior Color Repair',
+    'Interior repair system for spot and panel repair applications.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats', 'eb-511'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 Interior Color Repair System
 PRODUCT DESCRIPTION
 Envirobase High Performance Interior Color System is designed to provide a simple refinishing process
@@ -1335,7 +1533,7 @@ hazards of all its parts.
 • Improper handling and use, for example, poor spray technique, inadequate engineering
 controls and/or lack of proper Personal Protective Equipment (PPE), may result in hazardous
 conditions or injury.
-• Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+• Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
 • Provide adequate ventilation for health and fire hazard control.
 • Follow company policy, product MSDS and respirator manufacturer’s recommendations for
 selection and proper use of respiratory protection. Be sure employees are adequately trained
@@ -1356,9 +1554,29 @@ representations or warranties as to performance, results, or fitness for any int
 nor does PPG Industries warrant freedom from patent infringement in the use of any
 formula or process set forth herein. Mississauga, Ontario L5J 1K5
 © 2010 PPG Industries 4 EB-511 3/10
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-520 EC520 High Production Clearcoat', 'High-production clearcoat specifications and application guide.', 'reference', 'painting', ARRAY['clearcoat_application', 'eb-520', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-520 EC520 High Production Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-520 EC520 High Production Clearcoat',
+    'High-production clearcoat specifications and application guide.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'eb-520', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 ®
 EC520 En-V High Production Clearcoat
 Product Description
@@ -1509,9 +1727,29 @@ The PPG Logo, We protect and beautify the world, Envirobase, En-V, Deltron, OneC
 Industries Ohio, Inc.
 4
 © 2017 PPG Industries EB-520 08/17
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-530 EC530 Performance Clearcoat', 'Performance clearcoat with enhanced durability and gloss.', 'reference', 'painting', ARRAY['clearcoat_application', 'eb-530', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-530 EC530 Performance Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-530 EC530 Performance Clearcoat',
+    'Performance clearcoat with enhanced durability and gloss.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'eb-530', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 ™
 EC530 EN-V Performance Clearcoat
 Product Description
@@ -1629,7 +1867,7 @@ Before opening the packages, be sure you understand the warning messages on the 
 components, since the mixture will have the hazards of all its parts.
 • Improper handling and use, for example, poor spray technique, inadequate engineering controls and/or lack of
 proper Personal Protective Equipment (PPE), may result in hazardous conditions or injury.
-• Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+• Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
 • Provide adequate ventilation for health and fire hazard control.
 • Follow company policy, product SDS and respirator manufacturer’s recommendations for selection and proper
 use of respiratory protection. Be sure employees are adequately trained on the safe use of respirators per
@@ -1651,9 +1889,29 @@ SStrongsville, OHH 44149 Mississauga, Ontario L5J 1K5
 11-800-647-60500 1-888-310-44762
 PPPG logo, Bringing innovation to the surface, Envirobbase, Global Refinnish System, Delttron, OneChoice aand are trademarkks of PPG Industrries Ohio, Inc.
 4
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-550 EC550 Ultra Gloss Clearcoat', 'Ultra gloss clearcoat for premium appearance and protection.', 'reference', 'painting', ARRAY['clearcoat_application', 'eb-550', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-550 EC550 Ultra Gloss Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-550 EC550 Ultra Gloss Clearcoat',
+    'Ultra gloss clearcoat for premium appearance and protection.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'eb-550', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 - ®
 EC550 En V Ultra Gloss Clearcoat
 Product Description
@@ -1800,9 +2058,29 @@ Follow us online:
 www.ppgrefinish.com
 The PPG Logo, We protect and beautify the world, Envirobase, En-V, Deltron, OneChoice, and Global Refinish System are trademarks of PPG Industries Ohio, Inc.
 © 2016 PPG Industries 4 EB-550 06/16
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-700 EC700 One-Visit Production Clearcoat', 'Fast-drying one-visit production clearcoat system.', 'reference', 'painting', ARRAY['clearcoat_application', 'eb-700', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-700 EC700 One-Visit Production Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-700 EC700 One-Visit Production Clearcoat',
+    'Fast-drying one-visit production clearcoat system.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'eb-700', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 EC700 ONE-VISIT™ Production Clearcoat
 Product Description
 EC700 ONE-VISIT Production Clearcoat is a high gloss, high solids productivity clearcoat
@@ -1952,7 +2230,7 @@ Before opening the packages, be sure you understand the warning messages on the 
 components, since the mixture will have the hazards of all its parts.
  Improper handling and use, for example, poor spray technique, inadequate engineering controls and/or lack of
 proper Personal Protective Equipment (PPE), may result in hazardous conditions or injury.
- Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+ Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
  Provide adequate ventilation for health and fire hazard control.
  Follow company policy, product MSDS and respirator manufacturer’s recommendations for selection and proper
 use of respiratory protection. Be sure employees are adequately trained on the safe use of respirators per
@@ -1973,9 +2251,29 @@ PPG Industries PPG Canada Inc.
 Strongsville, OH 44149 Mississauga, Ontario L5J 1K5
 1-800-647-6050 1-888-310-4762
 Page 4 EB-700CAN
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-750 EC750 One-Visit Appearance Clearcoat', 'One-visit appearance clearcoat for rapid turnaround repairs.', 'reference', 'painting', ARRAY['clearcoat_application', 'eb-750', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-750 EC750 One-Visit Appearance Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-750 EC750 One-Visit Appearance Clearcoat',
+    'One-visit appearance clearcoat for rapid turnaround repairs.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'eb-750', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 EC750 One-Visit™ Appearance Clearcoat
 Product Description
 EC750 is a high gloss, high solids appearance clearcoat designed specifically for use with
@@ -2114,7 +2412,7 @@ Before opening the packages, be sure you understand the warning messages on the 
 components, since the mixture will have the hazards of all its parts.
  Improper handling and use, for example, poor spray technique, inadequate engineering controls and/or lack of
 proper Personal Protective Equipment (PPE), may result in hazardous conditions or injury.
- Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+ Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
  Provide adequate ventilation for health and fire hazard control.
  Follow company policy, product MSDS and respirator manufacturer’s recommendations for selection and proper
 use of respiratory protection. Be sure employees are adequately trained on the safe use of respirators per
@@ -2135,9 +2433,29 @@ PPG Industries PPG Canada Inc.
 Strongsville, OH 44149 Mississauga, Ontario L5J 1K5
 1-800-647-6050 1-888-310-4762
 Page 4 EB-750CAN
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EB-815 ECS81/ECS85/ECS87 A-Chromatic LV Sealer', 'Low-VOC a-chromatic sealer application and technical specifications.', 'reference', 'painting', ARRAY['sealer_application', 'eb-815', 'sealer'], '{"process_section": "sealer-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EB-815 ECS81/ECS85/ECS87 A-Chromatic LV Sealer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EB-815 ECS81/ECS85/ECS87 A-Chromatic LV Sealer',
+    'Low-VOC a-chromatic sealer application and technical specifications.',
+    'other',
+    'painting',
+    ARRAY['sealer_application', 'eb-815', 'sealer'],
+    '{"process_section": "sealer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 ECS81 White, ECS85 Gray, ECS87 Dark Gray A-Chromatic Sealers
 Product Description
 A-Chromatic Sealers ECS81White, ECS85 Gray and ECS87 Dark Gray are premium quality sealers designed
@@ -2295,9 +2613,29 @@ www.ppgrefinish.com
 The PPG Logo Envirobase Plus, and OneChoice are registered trademarks and We protect and beautify the world is a trademark of PPG Industries
 Ohio, Inc.
 5 EB-815 7/19
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EC-800 Ultra Fast Clearcoat', 'Ultra-fast drying clearcoat system for efficiency.', 'reference', 'painting', ARRAY['clearcoat_application', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EC-800 Ultra Fast Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EC-800 Ultra Fast Clearcoat',
+    'Ultra-fast drying clearcoat system for efficiency.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 EC800 Ultra Fast 2.1 Clearcoat
 Product Description
 ENVIROBASE® High Performance EC800 is an ultra fast, high gloss 2.1 VOC highly productive
@@ -2442,9 +2780,29 @@ www.ppgrefinish.com
 The PPG Logo, Bringing innovation to the surface, One Visit, Envirobase, PaintManager, OneChoice, and Global Refinish System are trademarks of
 PPG Industries Ohio, Inc.
 © 2015 PPG Industries 4 EB-800 08/15
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EHP Viscosity Check SOP', 'Standard operating procedure for checking paint viscosity with EHP systems.', 'sop', 'painting', ARRAY['equipment_and_tools', 'viscosity'], '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb, 'EHP viscosity check SOP
+
+-- Document: EHP Viscosity Check SOP
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EHP Viscosity Check SOP',
+    'Standard operating procedure for checking paint viscosity with EHP systems.',
+    'sop',
+    'painting',
+    ARRAY['equipment_and_tools', 'viscosity'],
+    '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'EHP viscosity check SOP
 Viscosity measures thickness of the paint, adjusting color to recommended viscosity improves
 paint performance, handling and drying characteristics. Inadequate base coat reduction can
 lead to soft paint film, slow flash time, die back, application difficulties when spraying and
@@ -2463,9 +2821,29 @@ correct thickness add more T494 reducer.
 8. Once the color viscosity is within desired range, the color is ready to spray.
 *An additional 5% of reducer will lower viscosity by three seconds.
 4-08-2017
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('ETB004 Textured Finish', 'Textured finish application for specialty waterborne finishes.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Technical Information
+
+-- Document: ETB004 Textured Finish
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'ETB004 Textured Finish',
+    'Textured finish application for specialty waterborne finishes.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Technical Information
 ETB004
 Textured Finish Repair System
 PRODUCT DESCRIPTION
@@ -2562,7 +2940,7 @@ hazards of all its parts.
 • Improper handling and use, for example, poor spray technique, inadequate engineering
 controls and/or lack of proper Personal Protective Equipment (PPE), may result in
 hazardous conditions or injury.
-• Follow spray equipment manufacturer''s instructions to prevent personal injury or fire.
+• Follow spray equipment manufacturer''''s instructions to prevent personal injury or fire.
 • Provide adequate ventilation for health and fire hazard control.
 • Follow company policy, product MSDS and respirator manufacturer’s recommendations
 for selection and proper use of respiratory protection. Be sure employees are adequately
@@ -2584,9 +2962,29 @@ representations or warranties as to performance, results, or fitness for any int
 nor does PPG Industries warrant freedom from patent infringement in the use of any
 formula or process set forth herein. Mississauga, Ontario L5J 1K5
 4
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('ETB005 Mercedes Alubeam', 'Specialized application process for Mercedes Alubeam metallic finish.', 'reference', 'painting', ARRAY['unique_finishes'], '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb, 'Technical Information
+
+-- Document: ETB005 Mercedes Alubeam
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'ETB005 Mercedes Alubeam',
+    'Specialized application process for Mercedes Alubeam metallic finish.',
+    'other',
+    'painting',
+    ARRAY['unique_finishes'],
+    '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Technical Information
 T4700 Liquid Metal used in repair process of Mercedes Benz 047 Alubeam ETB005
 The following process outlining the repair of Mercedes Benz 047 Alubeam paint schemes has been
 approved by PPG Industries. When repairing Mercedes Benz vehicles finished in this paint scheme, you
@@ -2708,9 +3106,29 @@ o Bake at 140°F (metal temp) for 30 minutes.
 • If necessary and to achieve the smoothest possible final finish, sand with P1200 or finer (dry) and
 then re-apply the Mar and Scratch Resistant Clearcoat.
 @ 2012 PPG Industries www.ppgrefinish.com ETB005 10/12
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('EU142 D8126 CeramiClear Mar & Scratch', 'Ceramic clearcoat with enhanced mar and scratch resistance.', 'reference', 'painting', ARRAY['clearcoat_application'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'Product Information
+
+-- Document: EU142 D8126 CeramiClear Mar & Scratch
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'EU142 D8126 CeramiClear Mar & Scratch',
+    'Ceramic clearcoat with enhanced mar and scratch resistance.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Product Information
 D8126 CeramiClear™ Mar and Scratch Resistant Clearcoat
 Product Description
 D8126 CeramiClearTM is a new nano-technology, mar and scratch resistant, high solid clearcoat. This new clear is
@@ -2856,9 +3274,29 @@ PPG Canada Inc.
 Mississauga, Ontario L5J 1K5
 1-888-310-4762
 © 2008 PPG Industries www.ppgrefinish.com Part No. EU-142 7/08
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Envirobase HP Toner Characteristics Guide', 'Guide to toner characteristics and color adjustment techniques.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Mixing Base Characteristics
+
+-- Document: Envirobase HP Toner Characteristics Guide
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Envirobase HP Toner Characteristics Guide',
+    'Guide to toner characteristics and color adjustment techniques.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Mixing Base Characteristics
 For use in
 Code Description Characteristic Solids Mica / Met
 T400 White Clean, high strength white. If less than 5% use T402. X (X)
@@ -2973,9 +3411,29 @@ T4343 Organic Red Yellowish face with angle deeper than T448 X
 X = acceptable use
 (X) = acceptable use, trace tinting only
 Envirobase is a trademark of PPG Industries Ohio, Inc. EHPCT101 6/13
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Gun Recommendations for Clear', 'Optimal spray gun selection and setup for clearcoat application.', 'reference', 'painting', ARRAY['equipment_and_tools', 'equipment'], '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb, 'Clearcoat gun
+
+-- Document: Gun Recommendations for Clear
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Gun Recommendations for Clear',
+    'Optimal spray gun selection and setup for clearcoat application.',
+    'other',
+    'painting',
+    ARRAY['equipment_and_tools', 'equipment'],
+    '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Clearcoat gun
 recommendations
 Model Tip/ PSI EC800/DC4010 EC700/EC750 D8126/DC4125
 Cap
@@ -3019,9 +3477,29 @@ NOTE: PPG Industries does NOT endorse any particular type or brand of applicatio
 above recommendations are only a general reference and should be used solely as a starting point. Your
 particular spray environment and application technique may require slight adjustments. All equipment was
 tested using “full trigger” during application with regulators approved by each gun manufacturer.
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Matt/Reduced Gloss Clears', 'Matte and reduced gloss clearcoat options for specialty finishes.', 'reference', 'painting', ARRAY['clearcoat_application'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'February 2012
+
+-- Document: Matt/Reduced Gloss Clears
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Matt/Reduced Gloss Clears',
+    'Matte and reduced gloss clearcoat options for specialty finishes.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'February 2012
 Matt/Reduced‐Gloss Clearcoats for OEM Colors
 New Five Band Format
 A new five band format for communicating matt/reduced‐gloss clearcoat recommendations for OEM colors is
@@ -3061,9 +3539,29 @@ NOTE: The actual gloss achieved by a painter can vary significantly as a result 
 temperature, hardener/thinner choice, etc. It is strongly encouraged that a test panel be sprayed before
 painting the vehicle.
 2
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('OC-1 Plastic Prep System', 'Complete plastic preparation system overview and procedures.', 'reference', 'painting', ARRAY['surface_prep', 'plastic'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, 'OC-1
+
+-- Document: OC-1 Plastic Prep System
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'OC-1 Plastic Prep System',
+    'Complete plastic preparation system overview and procedures.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'plastic'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'OC-1
 Plastic Prep System
 SU4901
 Clean and Scuff Sponge
@@ -3232,9 +3730,29 @@ PPG Canada Inc.
 Mississauga, Ontario, Canada L5J 1K5
 1-888-310-4762
 © 2009 PPG Industries www.ppgrefinish.com Part No. OC-1 1/09
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('OC-36 SX Metal Treatments', 'Metal treatment procedures and specifications for optimal adhesion.', 'reference', 'painting', ARRAY['surface_prep', 'metal'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '-
+
+-- Document: OC-36 SX Metal Treatments
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'OC-36 SX Metal Treatments',
+    'Metal treatment procedures and specifications for optimal adhesion.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'metal'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '-
 A Universal Ancillary Brand OC 36
 SX Metal Treatments
 SX501 / SX503 / SX520 / SX533 / SX579
@@ -3363,9 +3881,29 @@ PPG Industries PPG Canada Inc.
 Strongsville, OH 44149 Mississauga, Ontario Canada L5J 1K5
 The PPG Logo, OneChoice, and Bringing innovation to the surface are trademarks of PPG Industries Ohio, Inc.
 © 2015 PPG Industries www.ppgrefinish.com OC-36 9/15
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('OC-6 SX1071 Etch Prime', 'Etch prime application for enhanced surface preparation and adhesion.', 'reference', 'painting', ARRAY['surface_prep', 'primer'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, 'OC-6
+
+-- Document: OC-6 SX1071 Etch Prime
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'OC-6 SX1071 Etch Prime',
+    'Etch prime application for enhanced surface preparation and adhesion.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'primer'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'OC-6
 Etch Primer
 SX1071
 Etch Prime
@@ -3466,9 +4004,29 @@ PPG Industries PPG Canada Inc.
 Strongsville, OH 44149 Mississauga, Ontario, Canada L5J 1K5
 1-800-647-6050 1-888-310-4762
 © 2009 PPG Industries www.ppgrefinish.com Part No. OC-6 3/09
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('OC-7 Universal Flattening Agent', 'Universal flattening agent for creating matte finish effects.', 'reference', 'painting', ARRAY['unique_finishes'], '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb, 'A Universal Ancillary Brand OC - 7
+
+-- Document: OC-7 Universal Flattening Agent
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'OC-7 Universal Flattening Agent',
+    'Universal flattening agent for creating matte finish effects.',
+    'other',
+    'painting',
+    ARRAY['unique_finishes'],
+    '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'A Universal Ancillary Brand OC - 7
 Universal Flattening Agent LV
 SLV4985
 SLV4985 is a Low VOC Universal Flattening Agent
@@ -4206,9 +4764,29 @@ Volatiles wt. % 66.8-69.9 59.3-65.1 67.6-70.7
 Water wt. % 0.0-0.0 0.0-0.0 0.0-0.0
 Exempt wt. % 56.9-61.0 49.2-56.4 57.7-61.9
 Water vol. % 0.0-0.0 0.0-0.0 0.0-0.0
-Exempt ', true) ON CONFLICT DO NOTHING;
+Exempt ')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('OC-8 Universal Flexibilizer', 'Universal flexibilizer for improved paint flexibility and durability.', 'reference', 'painting', ARRAY['unique_finishes'], '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb, 'OC-8
+
+-- Document: OC-8 Universal Flexibilizer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'OC-8 Universal Flexibilizer',
+    'Universal flexibilizer for improved paint flexibility and durability.',
+    'other',
+    'painting',
+    ARRAY['unique_finishes'],
+    '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'OC-8
 Universal Flexibilizer
 SLV814
 SLV814 is a VOC compliant flex additive for
@@ -4285,9 +4863,29 @@ PPG Industries PPG Canada Inc.
 Strongsville, OH 44149 Mississauga, Ontario, Canada L5J 1K5
 1-800-647-6050 1-888-310-4762
 © 2009 PPG Industries www.ppgrefinish.com Part No. OC-8 2/09
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('P-243 DC4010 Velocity Premium Clearcoat', 'Velocity premium low-VOC clearcoat with superior performance.', 'reference', 'painting', ARRAY['clearcoat_application', 'p-243', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'P-243CAN
+
+-- Document: P-243 DC4010 Velocity Premium Clearcoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'P-243 DC4010 Velocity Premium Clearcoat',
+    'Velocity premium low-VOC clearcoat with superior performance.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'p-243', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'P-243CAN
 Deltron® Velocity Premium Clearcoat LV
 DC4010
 DC4010 is a high velocity, premium clearcoat,
@@ -4456,9 +5054,29 @@ PPG Canada Inc.
 Mississauga, Ontario L5J 1K5
 1-888-310-4762
 © 2010 PPG Industries www.ppgrefinish.com Part No. P243CAN, 06/10
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('P-244 DC4125 CeramiClear', 'CeramiClear ceramic-enhanced clearcoat for maximum protection.', 'reference', 'painting', ARRAY['clearcoat_application', 'p-244'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, 'P-244
+
+-- Document: P-244 DC4125 CeramiClear
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'P-244 DC4125 CeramiClear',
+    'CeramiClear ceramic-enhanced clearcoat for maximum protection.',
+    'other',
+    'painting',
+    ARRAY['clearcoat_application', 'p-244'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'P-244
 CeramiClear® Mar and Scratch Resistant Clearcoat
 DC4125
 DC4125 CeramiClear® is a mar and scratch
@@ -4603,9 +5221,29 @@ PPG Canada Inc.
 Mississauga, Ontario L5J 1K5
 1-888-310-4762
 © 2007 PPG Industries www.ppgrefinish.com Part No. P-244 6/07
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('P-245 DPLV Epoxy Primer', 'Technical specifications and application guide for DPLV epoxy primer.', 'reference', 'painting', ARRAY['primer_application', 'p-245', 'primer'], '{"process_section": "primer-application", "source": "PPG"}'::jsonb, 'P-245C
+
+-- Document: P-245 DPLV Epoxy Primer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'P-245 DPLV Epoxy Primer',
+    'Technical specifications and application guide for DPLV epoxy primer.',
+    'other',
+    'painting',
+    ARRAY['primer_application', 'p-245', 'primer'],
+    '{"process_section": "primer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'P-245C
 DPLV 2.1 Epoxy Primer
 DPLV
 DP48LV (White)
@@ -4744,7 +5382,7 @@ Exempt vol. % 40.7 40.2 42.4
 Important:
 The contents of this package must be blended with other components before the product can be used. Before opening the
 packages, be sure you understand the warning messages on the labels of all components, since the mixture will have the hazards
-of all its parts. Improper spray technique may result in a hazardous condition. Follow spray equipment manufacturer''s
+of all its parts. Improper spray technique may result in a hazardous condition. Follow spray equipment manufacturer''''s
 instructions to prevent personal injury or fire. Follow directions for respirator use. Wear eye and skin protection. Observe all
 applicable precautions.
 See Material Safety Data Sheet and Labels for additional safety information and handling instructions.
@@ -4766,9 +5404,29 @@ PPG Canada Inc.
 Mississauga, Ontario L5J 1K5
 1-888-310-4762
 © 2011 PPG Industries www.ppgrefinish.com Part No. P-245C , 1/11
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0001 Choosing PPE', 'Guidelines for selecting and using appropriate personal protective equipment.', 'reference', 'painting', ARRAY['pre_paint_considerations', 'pd-0001'], '{"process_section": "pre-paint-considerations", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0001 Choosing PPE
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0001 Choosing PPE',
+    'Guidelines for selecting and using appropriate personal protective equipment.',
+    'other',
+    'painting',
+    ARRAY['pre_paint_considerations', 'pd-0001'],
+    '{"process_section": "pre-paint-considerations", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 3 - CLEANING
 
 PD-0001
@@ -4843,9 +5501,29 @@ obase Training 4/2018
 
  
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0090 Initial Cleaning', 'Procedures for initial vehicle cleaning before repair and paint preparation.', 'reference', 'painting', ARRAY['cleaning', 'pd-0090'], '{"process_section": "cleaning", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0090 Initial Cleaning
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0090 Initial Cleaning',
+    'Procedures for initial vehicle cleaning before repair and paint preparation.',
+    'other',
+    'painting',
+    ARRAY['cleaning', 'pd-0090'],
+    '{"process_section": "cleaning", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 3 - CLEANING
 
 PD-0090
@@ -4894,9 +5572,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0100 Light Body Repair', 'Procedures for light body repair and surface preparation.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0100'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0100 Light Body Repair
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0100 Light Body Repair',
+    'Procedures for light body repair and surface preparation.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0100'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP
 
 PD-0100
@@ -4922,7 +5620,7 @@ with surface cleaner.
  
 
 4 Mix and Apply Filler
-Mix and apply filler per manufacturer''s recommendation. Keep the body filler within the
+Mix and apply filler per manufacturer''''s recommendation. Keep the body filler within the
 primer featheredge area. Allow body filler to cure completely.
 
 5 Initial Sanding of Filler
@@ -4963,9 +5661,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0115A Metal Surface Prep - Aluminum', 'Specialized surface preparation procedures for aluminum metal parts.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0115a', 'metal'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0115A Metal Surface Prep - Aluminum
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0115A Metal Surface Prep - Aluminum',
+    'Specialized surface preparation procedures for aluminum metal parts.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0115a', 'metal'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP
 
 PD-0115A
@@ -5022,9 +5740,8 @@ or 0705WB).
 4° SX Metal Treatments* followed by epoxy primer then body filler, surfacer or PPG topcoat
 system (refer to PD-0705 or PD-0705WB).
 
- 
-
-NOTE: To prevent dissimilar metal corrosion where bare metals make contact with one
+ '),
+  (1, 'NOTE: To prevent dissimilar metal corrosion where bare metals make contact with one
 another (bolts, rivets, hinges, etc.], ECK® (Electrolysis Corrosion Kontrol) should be
 applied. Refer to ECKPBO1 for details.
 
@@ -5036,9 +5753,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0115S Metal Surface Prep - Steel', 'Surface preparation procedures for steel metal components.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0115s', 'metal'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0115S Metal Surface Prep - Steel
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0115S Metal Surface Prep - Steel',
+    'Surface preparation procedures for steel metal components.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0115s', 'metal'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP eg #
 PD-0115S ,
 
@@ -5092,9 +5829,29 @@ or PD-0705WB).
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0120 Metal Parts - Ecoat', 'Surface preparation for metal parts with electrocoat protection.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0120', 'metal'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0120 Metal Parts - Ecoat
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0120 Metal Parts - Ecoat',
+    'Surface preparation for metal parts with electrocoat protection.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0120', 'metal'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP »
 
 PD-0120
@@ -5157,9 +5914,29 @@ PPG Certification - En
 obase Training 4/2018
 G. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0130 Metal Parts - LKQ Painter Parts', 'Preparation procedures for LKQ painter parts and metal components.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0130', 'metal'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0130 Metal Parts - LKQ Painter Parts
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0130 Metal Parts - LKQ Painter Parts',
+    'Preparation procedures for LKQ painter parts and metal components.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0130', 'metal'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP
 
 PD-0130
@@ -5213,9 +5990,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0150WB Surface Prep Basecoat Blend', 'Surface preparation for basecoat blending applications.', 'reference', 'painting', ARRAY['blending', 'pd-0150wb', 'basecoat', 'waterborne'], '{"process_section": "blending", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0150WB Surface Prep Basecoat Blend
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0150WB Surface Prep Basecoat Blend',
+    'Surface preparation for basecoat blending applications.',
+    'other',
+    'painting',
+    ARRAY['blending', 'pd-0150wb', 'basecoat', 'waterborne'],
+    '{"process_section": "blending", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP > os
 <]
 PD-0150WB oD ";
@@ -5266,9 +6063,29 @@ PPG Certification -
 ase Training 4/2018
 All Rights Reserved.
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0200C Bare Plastic Prep', 'Surface preparation techniques for bare plastic components.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0200c', 'plastic'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0200C Bare Plastic Prep
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0200C Bare Plastic Prep',
+    'Surface preparation techniques for bare plastic components.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0200c', 'plastic'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP
 
 P D re 0 2 0 0 C COMPLIANT MARKETS
@@ -5328,9 +6145,29 @@ G. All Rights Reserved
 
 @
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0220WB Primed Plastic Prep', 'Preparation procedures for waterborne primed plastic parts.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0220wb', 'waterborne', 'plastic'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0220WB Primed Plastic Prep
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0220WB Primed Plastic Prep',
+    'Preparation procedures for waterborne primed plastic parts.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0220wb', 'waterborne', 'plastic'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP
 
 PD-0220WB
@@ -5390,9 +6227,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0230 Painted Plastic Prep', 'Surface preparation for previously painted plastic components.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0230', 'plastic'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0230 Painted Plastic Prep
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0230 Painted Plastic Prep',
+    'Surface preparation for previously painted plastic components.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0230', 'plastic'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 <
 6 - SURFACE PREP 27,6!
 PD-0230 3° %
@@ -5442,16 +6299,36 @@ PPG Certification - Envirobase Training 4/2018
 
 @
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0235C Bumper Sensor', 'Preparation and handling procedures for bumper sensor areas.', 'reference', 'painting', ARRAY['surface_prep', 'pd-0235c'], '{"process_section": "surface-prep", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0235C Bumper Sensor
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0235C Bumper Sensor',
+    'Preparation and handling procedures for bumper sensor areas.',
+    'other',
+    'painting',
+    ARRAY['surface_prep', 'pd-0235c'],
+    '{"process_section": "surface-prep", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 6 - SURFACE PREP > os
 <
 PD =0235C COMPLIANT MARKETS 9 i 4
 
 BUMPER SENSOR
 
-Check and confirm that bumper sensors are painted on the customer''s vehicle.
+Check and confirm that bumper sensors are painted on the customer''''s vehicle.
 Do NOT paint if the existing sensors are unpainted.
 
 CAUTION: Wear the proper safety protection during this process.
@@ -5487,11 +6364,50 @@ document PD-0230
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0300 Masking', 'Comprehensive masking procedures to protect non-paint areas during application.', 'reference', 'painting', ARRAY['masking', 'pd-0300'], '{"process_section": "masking", "source": "PPG"}'::jsonb, '', true) ON CONFLICT DO NOTHING;
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0500 Etch', 'Etch primer application procedures for improved surface adhesion.', 'reference', 'painting', ARRAY['primer_application', 'pd-0500', 'primer'], '{"process_section": "primer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+-- Document: PD-0300 Masking
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0300 Masking',
+    'Comprehensive masking procedures to protect non-paint areas during application.',
+    'other',
+    'painting',
+    ARRAY['masking', 'pd-0300'],
+    '{"process_section": "masking", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+) AS chunks(chunk_idx, chunk_content);
+
+
+-- Document: PD-0500 Etch
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0500 Etch',
+    'Etch primer application procedures for improved surface adhesion.',
+    'other',
+    'painting',
+    ARRAY['primer_application', 'pd-0500', 'primer'],
+    '{"process_section": "primer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 PRIMER APPLICATION
 
 PD-0500
@@ -5546,9 +6462,8 @@ overlap onto sanded paint and body filler is acceptable, but should be kept to a
 
 Clean spray gun following the application of the final coat of Etch Primer.
 
- 
-
-Allow the Etch Primer to air dry according to the recoat schedule found on the product data
+ '),
+  (1, 'Allow the Etch Primer to air dry according to the recoat schedule found on the product data
 sheet. Apply primer surfacer or sealer after appropriate dry time. Topcoats must NOT be
 applied directly to etch primer.
 
@@ -5556,9 +6471,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0510 Epoxy', 'Epoxy primer application guidelines and technical specifications.', 'reference', 'painting', ARRAY['primer_application', 'pd-0510'], '{"process_section": "primer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0510 Epoxy
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0510 Epoxy',
+    'Epoxy primer application guidelines and technical specifications.',
+    'other',
+    'painting',
+    ARRAY['primer_application', 'pd-0510'],
+    '{"process_section": "primer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 8 - PRIMER APPLICATION
 
 PD-0510
@@ -5630,9 +6565,29 @@ G. All Rights Reserved
 
  
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0520 Spray Primer Surfacer', 'Spray primer surfacer application techniques and best practices.', 'reference', 'painting', ARRAY['surfacer_application', 'pd-0520', 'primer', 'surfacer'], '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0520 Spray Primer Surfacer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0520 Spray Primer Surfacer',
+    'Spray primer surfacer application techniques and best practices.',
+    'other',
+    'painting',
+    ARRAY['surfacer_application', 'pd-0520', 'primer', 'surfacer'],
+    '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 9 - SURFACER APPLICATION
 
 PD-0520
@@ -5692,9 +6647,29 @@ G. All Rights Reserved
 
  
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0540 UV Primer Surfacer', 'UV-sensitive primer surfacer application and handling procedures.', 'reference', 'painting', ARRAY['surfacer_application', 'pd-0540', 'primer', 'surfacer'], '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0540 UV Primer Surfacer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0540 UV Primer Surfacer',
+    'UV-sensitive primer surfacer application and handling procedures.',
+    'other',
+    'painting',
+    ARRAY['surfacer_application', 'pd-0540', 'primer', 'surfacer'],
+    '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 9 - SURFACER APPLICATION
 
 PD-0540
@@ -5720,7 +6695,7 @@ Mask area as needed.
 
 Plug in UV curing lamp and turn unit on allowing sufficient warm-up for a few minutes
 before you will need the lamp [at least two minutes or follow time suggested by
-manufacturer''s instructions}.
+manufacturer''''s instructions}.
 
 RO DS =
 
@@ -5733,7 +6708,7 @@ area. (If additional coats are needed, reapply AFTER curing.)
  
 
 6 Cure UV primer for at least two minutes with the UV curing lamp. Take care to place lamp
-appropriately. Follow manufacturer''s instructions.
+appropriately. Follow manufacturer''''s instructions.
 
  
 
@@ -5751,9 +6726,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0570AD Pinchweld Priming', 'Specialized priming procedures for pinchweld seams and joints.', 'reference', 'painting', ARRAY['primer_application', 'pd-0570ad'], '{"process_section": "primer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0570AD Pinchweld Priming
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0570AD Pinchweld Priming',
+    'Specialized priming procedures for pinchweld seams and joints.',
+    'other',
+    'painting',
+    ARRAY['primer_application', 'pd-0570ad'],
+    '{"process_section": "primer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 8 - PRIMER APPLICATION
 
 PD-0570AD
@@ -5822,9 +6817,29 @@ py ENVIROBASE
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0610 Mixing RST Paint', 'Mixing procedures and ratios for RST paint basecoats.', 'reference', 'painting', ARRAY['basecoats_and_tricoats', 'pd-0610'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0610 Mixing RST Paint
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0610 Mixing RST Paint',
+    'Mixing procedures and ratios for RST paint basecoats.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats', 'pd-0610'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 8 - PRIMER APPLICATION ss 4
 
 PD-0610
@@ -5887,9 +6902,29 @@ panels
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0670WB Viscosity', 'Viscosity specifications and measurement procedures for waterborne paints.', 'reference', 'painting', ARRAY['equipment_and_tools', 'pd-0670wb', 'waterborne', 'viscosity'], '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0670WB Viscosity
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0670WB Viscosity',
+    'Viscosity specifications and measurement procedures for waterborne paints.',
+    'other',
+    'painting',
+    ARRAY['equipment_and_tools', 'pd-0670wb', 'waterborne', 'viscosity'],
+    '{"process_section": "equipment-and-tools", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
  
 
 ™
@@ -5942,9 +6977,29 @@ basecoat, stir well and recheck.
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0705WB Waterborne BC Application', 'Waterborne basecoat application techniques and spray parameters.', 'product_info', 'painting', ARRAY['basecoats_and_tricoats', 'pd-0705wb', 'basecoat', 'waterborne'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0705WB Waterborne BC Application
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0705WB Waterborne BC Application',
+    'Waterborne basecoat application techniques and spray parameters.',
+    'tech_sheet',
+    'painting',
+    ARRAY['basecoats_and_tricoats', 'pd-0705wb', 'basecoat', 'waterborne'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 11 - BASECOATS AND TRI-COATS
 
 PD-0705WB
@@ -6001,9 +7056,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0706WB Basecoat Blending', 'Basecoat blending techniques for seamless color matching.', 'reference', 'painting', ARRAY['blending', 'pd-0706wb', 'basecoat', 'waterborne'], '{"process_section": "blending", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0706WB Basecoat Blending
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0706WB Basecoat Blending',
+    'Basecoat blending techniques for seamless color matching.',
+    'other',
+    'painting',
+    ARRAY['blending', 'pd-0706wb', 'basecoat', 'waterborne'],
+    '{"process_section": "blending", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 12 - BLENDING
 
 PD-0706WB
@@ -6055,9 +7130,8 @@ d. Lightly tack off all panels using tack rag.
 
 e. Acolor blender may be used in the color or as a “wet bed” to assist in color blending
 on metallic and pearl colors. See the waterborne basecoat product data sheet for
-further instructions.
-
-Allow basecoat to flash for 15 minutes at 70°F.
+further instructions.'),
+  (1, 'Allow basecoat to flash for 15 minutes at 70°F.
 NOTE: If IR heat is to be used on the clearcoat, BEFORE applying the clearcoat,
 IR dry the basecoat.
 
@@ -6069,9 +7143,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0730 Clearcoat Application', 'Standard clearcoat application procedures and spray techniques.', 'product_info', 'painting', ARRAY['clearcoat_application', 'pd-0730', 'clearcoat'], '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0730 Clearcoat Application
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0730 Clearcoat Application',
+    'Standard clearcoat application procedures and spray techniques.',
+    'tech_sheet',
+    'painting',
+    ARRAY['clearcoat_application', 'pd-0730', 'clearcoat'],
+    '{"process_section": "clearcoat-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 13 - CLEARCOAT APPLICATION
 
 PD-0730
@@ -6105,9 +7199,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0735 Clearcoat Blending', 'Clearcoat blending procedures for invisible repairs.', 'reference', 'painting', ARRAY['blending', 'pd-0735', 'clearcoat'], '{"process_section": "blending", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0735 Clearcoat Blending
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0735 Clearcoat Blending',
+    'Clearcoat blending procedures for invisible repairs.',
+    'other',
+    'painting',
+    ARRAY['blending', 'pd-0735', 'clearcoat'],
+    '{"process_section": "blending", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 13 - CLEARCOAT APPLICATION 3.
 J
 PD-0735 ou
@@ -6165,9 +7279,29 @@ PPG Certification -
 ase Training 4/2018
 All Rights Reserved.
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0740 Painting Parts Off Vehicle', 'Techniques for painting removed parts and components.', 'reference', 'painting', ARRAY['finished_paint_procedures', 'pd-0740'], '{"process_section": "finished-paint-procedures", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0740 Painting Parts Off Vehicle
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0740 Painting Parts Off Vehicle',
+    'Techniques for painting removed parts and components.',
+    'other',
+    'painting',
+    ARRAY['finished_paint_procedures', 'pd-0740'],
+    '{"process_section": "finished-paint-procedures", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 11 - BASECOATS AND TRI-COATS
 
 PD-0740
@@ -6216,9 +7350,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0800 Removing Paint Defects', 'Procedures for identifying and correcting paint defects.', 'reference', 'painting', ARRAY['finished_paint_procedures', 'pd-0800'], '{"process_section": "finished-paint-procedures", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0800 Removing Paint Defects
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0800 Removing Paint Defects',
+    'Procedures for identifying and correcting paint defects.',
+    'other',
+    'painting',
+    ARRAY['finished_paint_procedures', 'pd-0800'],
+    '{"process_section": "finished-paint-procedures", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 L~
 bo”
 
@@ -6286,9 +7440,29 @@ b. Then buff by hand with a clean microfiber towel to a deep gloss finish.
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0810 Final Cleaning and Detailing', 'Final cleaning and detailing procedures after painting to ensure quality finish.', 'reference', 'painting', ARRAY['cleaning', 'pd-0810'], '{"process_section": "cleaning", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0810 Final Cleaning and Detailing
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0810 Final Cleaning and Detailing',
+    'Final cleaning and detailing procedures after painting to ensure quality finish.',
+    'other',
+    'painting',
+    ARRAY['cleaning', 'pd-0810'],
+    '{"process_section": "cleaning", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 15 - FINISHED PAINT PROCEDURES
 
 PD-0810
@@ -6372,9 +7546,29 @@ G. All Rights Reserved
 
 S
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0701 Primer Sealer Application', 'Primer sealer application procedures and best practices.', 'product_info', 'painting', ARRAY['sealer_application', 'pd-0701', 'primer', 'sealer'], '{"process_section": "sealer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0701 Primer Sealer Application
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0701 Primer Sealer Application',
+    'Primer sealer application procedures and best practices.',
+    'tech_sheet',
+    'painting',
+    ARRAY['sealer_application', 'pd-0701', 'primer', 'sealer'],
+    '{"process_section": "sealer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 wa ™
 5% 9
 10 - SEALER APPLICATION > ‘
@@ -6419,9 +7613,29 @@ applying basecoat.
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0521 Spray Waterborne Primer', 'Application procedures for waterborne primer surfacers.', 'reference', 'painting', ARRAY['surfacer_application', 'pd-0521', 'primer', 'waterborne'], '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0521 Spray Waterborne Primer
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0521 Spray Waterborne Primer',
+    'Application procedures for waterborne primer surfacers.',
+    'other',
+    'painting',
+    ARRAY['surfacer_application', 'pd-0521', 'primer', 'waterborne'],
+    '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 9 - SURFACER APPLICATION
 
 PD-0521
@@ -6471,9 +7685,29 @@ ENVIROBASE’
 
 HIGH PERFORMANCE
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('PD-0590 Primer Surfacer Sanding', 'Sanding and finishing procedures for primer surfacer coats.', 'reference', 'painting', ARRAY['surfacer_application', 'pd-0590', 'primer', 'surfacer'], '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb, '--- Page 1 ---
+
+-- Document: PD-0590 Primer Surfacer Sanding
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'PD-0590 Primer Surfacer Sanding',
+    'Sanding and finishing procedures for primer surfacer coats.',
+    'other',
+    'painting',
+    ARRAY['surfacer_application', 'pd-0590', 'primer', 'surfacer'],
+    '{"process_section": "surfacer-application", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '--- Page 1 ---
 9 - SURFACER APPLICATION 3.
 
 <
@@ -6516,9 +7750,29 @@ Basecoat Blend Prep - Waterborne.
 PPG Certification - Envirobase Training 4/2018
 © 2018 PPG. All Rights Reserved
 
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Pastel Color Blend', 'Pastel color blending and application techniques for specialty finishes.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Pastel Color Blend
+
+-- Document: Pastel Color Blend
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Pastel Color Blend',
+    'Pastel color blending and application techniques for specialty finishes.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Pastel Color Blend
 FFFTOOOraRRRinMMMiAAnATTgTIIIOOONNN
 Pastel Colors
 Pigment flotation
@@ -6537,9 +7791,29 @@ other 2 mixtures.
 • To colmplete the fade out (blend), apply color blend using the reverse application technique.
 • Sake spray gun regularly prior to spraying.
 FFFTOOOraRRRinMMMinAAAgTTTIIIOOONNN
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('TBRR-3 Ford Ruby Red', 'Ford ruby red tri-coat application and repair procedures.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Technical Bulletin
+
+-- Document: TBRR-3 Ford Ruby Red
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'TBRR-3 Ford Ruby Red',
+    'Ford ruby red tri-coat application and repair procedures.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Technical Bulletin
 Ford Code RR / Ruby Red Application Process TBRR-3
 PRODUCT DESCRIPTION
 Ford code RR / Ruby Red uses a special pigment in the clearcoat to produce a very clean candy apple red effect.
@@ -6638,9 +7912,29 @@ PPG Industries PPG Canada Inc.
 Strongsville, OH 44149 Mississauga, Ontario L5J 1K5
 1-800-647-6050 1-888-310-4762
 © 2013 PPG Industries www.ppgrefinish.com TBRR-3 12/13
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('TCB104 Repair Process Document', 'Detailed repair process documentation for TCB104 waterborne tri-coat systems.', 'product_info', 'painting', ARRAY['repair_process'], '{"process_section": "repair-process", "source": "PPG"}'::jsonb, 'Technical Bulletin
+
+-- Document: TCB104 Repair Process Document
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'TCB104 Repair Process Document',
+    'Detailed repair process documentation for TCB104 waterborne tri-coat systems.',
+    'tech_sheet',
+    'painting',
+    ARRAY['repair_process'],
+    '{"process_section": "repair-process", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Technical Bulletin
 OEM Substrate
 www.ppgrefinish.com
 589 code 923627 or 590 code 905264
@@ -6710,9 +8004,29 @@ must be activated according to the appropriate product sheets.
 ®
 or sealer must be applied over the whole panel.
 Note: For best result, CeramiClear should be used for full panel repairs.
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('TCB-107 T4850 Vivid Red Ruby', 'Vivid red ruby tri-coat repair process and application guide.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'The PPG Logo, We protect and beautify the world, are trademarks of PPG Industries Ohio, Inc.
+
+-- Document: TCB-107 T4850 Vivid Red Ruby
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'TCB-107 T4850 Vivid Red Ruby',
+    'Vivid red ruby tri-coat repair process and application guide.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'The PPG Logo, We protect and beautify the world, are trademarks of PPG Industries Ohio, Inc.
 © 2025 PPG Industries. All rights reserved. www.ppgrefinish.com
 TCB-10 7 10/2025
 T4850 Vivid Red Ruby T4800 Midcoat Clear
@@ -6735,9 +8049,29 @@ For additional information and blend processes refer to product data sheets and/
 EB143 - ENVIROBASE® High Performance Waterborne Basecoat.
 EB-MOD4900 ENVIROBASE® High Performance ONEVISIT Modifier.
 WBPT001 - Waterborne Tri Coat Process.
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('TCB100 Red Tinted Clearcoat Repair', 'Red tinted clearcoat repair process for tri-coat systems.', 'reference', 'painting', ARRAY['basecoats_and_tricoats', 'clearcoat'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Technical Bulletin
+
+-- Document: TCB100 Red Tinted Clearcoat Repair
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'TCB100 Red Tinted Clearcoat Repair',
+    'Red tinted clearcoat repair process for tri-coat systems.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats', 'clearcoat'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Technical Bulletin
 VM4350 Tinted Clearcoat Application Process
 TCB100
 Some of today’s OEM automotive finishes utilize a tinted clear layer to produce a very clean
@@ -6864,9 +8198,29 @@ Strongsville, OH 44149 Mississauga, Ontario L5J 1K5
 The PPG Logo, We protect and beautify the world, Aquabase, Deltron, Envirobase, Global Refinish System, Nexa Autocolor, 2K, PaintManager and Vibrance Collection are registered
 trademarks of PPG Industries Ohio, Inc.
 © 2017 PPG Industries www.ppgrefinish.com TCB100 Rev. 8/17
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('TCB103 Mazda 46G Full Panel', 'Full panel repair process for Mazda 46G Machine Gray tri-coat.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Mazda 46G Machine Gray
+
+-- Document: TCB103 Mazda 46G Full Panel
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'TCB103 Mazda 46G Full Panel',
+    'Full panel repair process for Mazda 46G Machine Gray tri-coat.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Mazda 46G Machine Gray
 TCB103
 Technical Bulletin
 Waterborne Basecoat Full Panel Repair Process 7‐6‐2017 Revision
@@ -6983,9 +8337,29 @@ o Apply 2 additional coats of clear using normal clearcoat application methods f
 selected.
 The PPG Logo, We protect and beautify the world, PaintManager, Aquabase, Envirobase, and OneChoice are trademarks of PPG Industries Ohio, Inc.
 © 2017 PPG Industries www.ppgrefinish.com 7/2017
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('TCB103 Mazda 46G Minor Repair', 'Minor repair process for Mazda 46G Machine Gray tri-coat.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, 'Mazda 46G Machine Gray
+
+-- Document: TCB103 Mazda 46G Minor Repair
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'TCB103 Mazda 46G Minor Repair',
+    'Minor repair process for Mazda 46G Machine Gray tri-coat.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Mazda 46G Machine Gray
 TCB103
 Technical Bulletin
 Waterborne Basecoat Minor Repair Process 6‐22‐2017 Revision
@@ -7087,9 +8461,29 @@ o Apply 2 additional coats of clear using normal clearcoat application methods f
 selected.
 The PPG Logo, We protect and beautify the world, PaintManager, Aquabase, Envirobase, Nexa Autocolor, and OneChoice are trademarks of PPG Industries Ohio, Inc.
 © 2017 PPG Industries www.ppgrefinish.com 6/2017
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('VB16 Hot Rod Black', 'Hot rod black specialty finish application and techniques.', 'reference', 'painting', ARRAY['unique_finishes'], '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb, 'VB-16
+
+-- Document: VB16 Hot Rod Black
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'VB16 Hot Rod Black',
+    'Hot rod black specialty finish application and techniques.',
+    'other',
+    'painting',
+    ARRAY['unique_finishes'],
+    '{"process_section": "unique-finishes", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'VB-16
 DITZLER® Hot Rod Black
 HRB9700 Hot Rod Black Kit
 VM9700 Hot Rod Black
@@ -7226,9 +8620,29 @@ Mississauga, Ontario L5J 1K5
 1-888-310-4762
 The PPG logo, Bringing innovation to the surface, Ditzler, and Vibrance Collection are trademarks of PPG Industries Ohio, Inc.
 © 2013 PPG Industries All rights reserved www.ppgrefinish.com Part No. VB-16, 4/13
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Variant Symbols', 'Guide to understanding and using variant color symbols and notation.', 'reference', 'painting', ARRAY['basecoats_and_tricoats'], '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb, '“Variant Symbol“ Definitions
+
+-- Document: Variant Symbols
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Variant Symbols',
+    'Guide to understanding and using variant color symbols and notation.',
+    'other',
+    'painting',
+    ARRAY['basecoats_and_tricoats'],
+    '{"process_section": "basecoats-and-tricoats", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, '“Variant Symbol“ Definitions
 Chrysler
 CHR,ZBJ (//L)
 ZBJ/PBJ
@@ -7271,9 +8685,29 @@ film. Flop is generally described as either “lighter” or “darker” in the
 “D // L” Variant Symbols on a formula it would mean the color has a “dark face” and a “light flop”.
 EHP Variant Symbols.pub atn Rev. 04/09
 © 2009 PPG Industries
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
 
-INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, content_text, is_active) VALUES ('Waterborne Tri-Coat Refinish Process', 'Complete guide to the waterborne tri-coat refinishing process for body shop repairs.', 'product_info', 'painting', ARRAY['repair_process', 'waterborne'], '{"process_section": "repair-process", "source": "PPG"}'::jsonb, 'Waterborne Tri-Coat Refinish Process
+
+-- Document: Waterborne Tri-Coat Refinish Process
+WITH new_doc AS (
+  INSERT INTO public.documents (title, description, doc_type, tab_slug, tags, metadata, is_active)
+  VALUES (
+    'Waterborne Tri-Coat Refinish Process',
+    'Complete guide to the waterborne tri-coat refinishing process for body shop repairs.',
+    'tech_sheet',
+    'painting',
+    ARRAY['repair_process', 'waterborne'],
+    '{"process_section": "repair-process", "source": "PPG"}'::jsonb,
+    true
+  )
+  RETURNING id
+)
+INSERT INTO public.document_chunks (document_id, chunk_index, content)
+SELECT id, chunk_idx, chunk_content
+FROM new_doc
+CROSS JOIN (VALUES
+  (0, 'Waterborne Tri-Coat Refinish Process
 This Tri-Coat Refinishing Process is designed as a guide when performing
 a tri-coat refinish repair. It’s important to familiarize yourself with the
 aspects of this process and plan your application prior to beginning the
@@ -7416,4 +8850,5 @@ PPG Canada, Inc.
 Mississauga, Ontario L5J 1K5
 www.ppgrefinish.com
 © PPG Industries. All rights reserved. The PPG logo and Bringing Innovation to the Surface are trademarks of PPG Industries Ohio, Inc.
-', true) ON CONFLICT DO NOTHING;
+')
+) AS chunks(chunk_idx, chunk_content);
