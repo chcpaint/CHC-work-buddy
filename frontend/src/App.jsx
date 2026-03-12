@@ -1305,32 +1305,56 @@ export default function App() {
     return summary;
   }, [cleanForSpeech]);
 
-  // Track whether Max is waiting for "continue" voice command
+  // ── Cloud TTS (OpenAI) — consistent natural voice for all speech ──
   const [awaitingContinue, setAwaitingContinue] = useState(false);
   const pendingFullTextRef = useRef(null);
   const continueListenerRef = useRef(null);
+  const ttsAudioRef = useRef(null);  // Current playing Audio element
 
-  // Helper to create a configured utterance with the right voice
-  const createUtterance = useCallback((text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    const langCode = language === "fr" ? "fr-CA" : language === "es" ? "es-MX" : "en-US";
-    const langPrefix = langCode.slice(0, 2);
-    utterance.lang = langCode;
-    utterance.rate = 0.92;
-    utterance.pitch = 0.85;
-    const cachedVoice = voiceCacheRef.current[langPrefix];
-    if (cachedVoice) {
-      utterance.voice = cachedVoice;
-    } else {
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = PREFERRED_MALE_VOICES[langPrefix] || PREFERRED_MALE_VOICES.en;
-      for (const name of preferred) {
-        const match = voices.find(v => v.name.toLowerCase().includes(name.toLowerCase()) && v.lang.startsWith(langPrefix));
-        if (match) { utterance.voice = match; voiceCacheRef.current[langPrefix] = match; break; }
+  // Core: fetch audio from backend TTS endpoint (cached on server)
+  const playCloudTTS = useCallback(async (text, { onStart, onEnd, onError } = {}) => {
+    try {
+      // Stop any currently playing audio
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current.src = "";
+        ttsAudioRef.current = null;
       }
+
+      const res = await authFetch(`${API_BASE}/api/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, language }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`TTS failed: ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      ttsAudioRef.current = audio;
+
+      audio.onplay = () => { onStart?.(); };
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        ttsAudioRef.current = null;
+        onEnd?.();
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        ttsAudioRef.current = null;
+        onError?.();
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.warn("Cloud TTS error:", err);
+      ttsAudioRef.current = null;
+      onError?.();
     }
-    return utterance;
-  }, [language, PREFERRED_MALE_VOICES]);
+  }, [language]);
 
   // Start a brief voice listener for "continue" / "yes" / "read it" commands
   const startContinueListener = useCallback((fullText) => {
@@ -1352,12 +1376,13 @@ export default function App() {
       const shouldContinue = continueWords.some(w => transcript.includes(w));
       if (shouldContinue && pendingFullTextRef.current) {
         setAwaitingContinue(false);
-        // Speak the full answer
-        const utt = createUtterance(pendingFullTextRef.current.slice(0, 2000));
-        utt.onstart = () => setIsSpeaking(true);
-        utt.onend = () => { setIsSpeaking(false); pendingFullTextRef.current = null; };
-        utt.onerror = () => { setIsSpeaking(false); pendingFullTextRef.current = null; };
-        window.speechSynthesis.speak(utt);
+        const fullClean = pendingFullTextRef.current;
+        pendingFullTextRef.current = null;
+        playCloudTTS(fullClean, {
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false),
+          onError: () => setIsSpeaking(false),
+        });
       } else {
         setAwaitingContinue(false);
         pendingFullTextRef.current = null;
@@ -1365,23 +1390,27 @@ export default function App() {
     };
     listener.onerror = () => { setAwaitingContinue(false); };
     listener.onend = () => {
-      // If no response heard after timeout, just dismiss
       setTimeout(() => { setAwaitingContinue(false); }, 500);
     };
 
     continueListenerRef.current = listener;
-    try { listener.start(); } catch(e) { /* already listening */ }
+    try { listener.start(); } catch(e) {}
 
-    // Auto-timeout after 6 seconds if no voice detected
+    // Auto-timeout after 6 seconds
     setTimeout(() => {
       try { listener.stop(); } catch(e) {}
       setAwaitingContinue(false);
     }, 6000);
-  }, [language, createUtterance]);
+  }, [language, playCloudTTS]);
 
-  const speak = useCallback((text, { fullRead = false } = {}) => {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+  const speak = useCallback(async (text, { fullRead = false } = {}) => {
+    // Stop any current audio
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current.src = "";
+      ttsAudioRef.current = null;
+    }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setAwaitingContinue(false);
     pendingFullTextRef.current = null;
 
@@ -1390,49 +1419,54 @@ export default function App() {
 
     if (fullRead) {
       // Direct full read — user tapped the button or said "continue"
-      const utterance = createUtterance(clean.slice(0, 2000));
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
+      await playCloudTTS(clean.slice(0, 3000), {
+        onStart: () => setIsSpeaking(true),
+        onEnd: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
       return;
     }
 
-    // Short summary first
+    // Speak summary via cloud TTS, then prompt for full read if long
     const summary = getShortSummary(clean);
-    const summaryUtterance = createUtterance(summary);
-    summaryUtterance.onstart = () => setIsSpeaking(true);
+    setIsSpeaking(true);
 
-    summaryUtterance.onend = () => {
-      setIsSpeaking(false);
-      // If the answer is long, ask if they want to hear the rest
-      if (isLongAnswer) {
-        pendingFullTextRef.current = clean;
-        setAwaitingContinue(true);
+    await playCloudTTS(summary, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: async () => {
+        setIsSpeaking(false);
+        if (isLongAnswer) {
+          pendingFullTextRef.current = clean;
+          setAwaitingContinue(true);
 
-        const promptText = language === "fr"
-          ? "Voulez-vous que je lise la réponse complète?"
-          : language === "es"
-          ? "¿Quieres que lea la respuesta completa?"
-          : "Want me to read the full answer?";
+          const promptText = language === "fr"
+            ? "Voulez-vous que je lise la réponse complète?"
+            : language === "es"
+            ? "¿Quieres que lea la respuesta completa?"
+            : "Want me to read the full answer?";
 
-        const promptUtterance = createUtterance(promptText);
-        promptUtterance.rate = 0.95;
-        promptUtterance.onstart = () => setIsSpeaking(true);
-        promptUtterance.onend = () => {
-          setIsSpeaking(false);
-          // Start listening for voice command
-          startContinueListener(clean);
-        };
-        promptUtterance.onerror = () => setIsSpeaking(false);
-        window.speechSynthesis.speak(promptUtterance);
-      }
-    };
-    summaryUtterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(summaryUtterance);
-  }, [language, PREFERRED_MALE_VOICES, getShortSummary, createUtterance, startContinueListener]);
+          await playCloudTTS(promptText, {
+            onStart: () => setIsSpeaking(true),
+            onEnd: () => {
+              setIsSpeaking(false);
+              startContinueListener(clean);
+            },
+            onError: () => setIsSpeaking(false),
+          });
+        }
+      },
+      onError: () => setIsSpeaking(false),
+    });
+  }, [language, getShortSummary, cleanForSpeech, playCloudTTS, startContinueListener]);
 
   const stopSpeaking = useCallback(() => {
+    // Stop cloud TTS audio
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current.src = "";
+      ttsAudioRef.current = null;
+    }
+    // Also cancel any browser TTS (legacy cleanup)
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setIsSpeaking(false);
     setAwaitingContinue(false);

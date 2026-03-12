@@ -20,6 +20,7 @@ import { authRouter } from './routes/auth.js';
 import { usersRouter } from './routes/users.js';
 import { learningRouter } from './routes/learning.js';
 import { videoScriptsRouter } from './routes/video-scripts.js';
+import { ttsRouter } from './routes/tts.js';
 import { authMiddleware } from './middleware/auth.js';
 import { auditMiddleware } from './middleware/audit.js';
 import { logger } from './utils/logger.js';
@@ -134,9 +135,18 @@ const uploadLimiter = rateLimit({
   validate: { trustProxy: false, xForwardedForHeader: false },
 });
 
+// TTS limiter — moderate (cached hits are free, but generation costs money)
+const ttsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 40,  // 40 TTS requests/min per IP
+  message: { error: 'TTS rate limit reached. Please wait a moment.' },
+  validate: { trustProxy: false, xForwardedForHeader: false },
+});
+
 app.use('/api', apiLimiter);
 app.use('/api/agent', agentLimiter);
 app.use('/api/ingest', uploadLimiter);
+app.use('/api/tts', ttsLimiter);
 
 // ─── Request Logging & Audit ──────────────────────────────────
 app.use((req, res, next) => {
@@ -159,6 +169,7 @@ app.get('/health', (req, res) => {
     openai_ready: !!openai,
     openai_key_set: !!process.env.OPENAI_API_KEY,
     anthropic_key_set: !!process.env.ANTHROPIC_API_KEY,
+    tts_ready: !!openai,
   });
 });
 
@@ -323,6 +334,7 @@ app.use('/api/ingest', authMiddleware, ingestRouter);
 app.use('/api/auth/users', authMiddleware, usersRouter);
 app.use('/api/learning', authMiddleware, learningRouter);
 app.use('/api/video-scripts', authMiddleware, videoScriptsRouter);
+app.use('/api/tts', authMiddleware, ttsRouter);
 
 // ─── Query Logs / Knowledge Gap Report (admin only) ──────────
 app.get('/api/query-logs', authMiddleware, async (req, res) => {
