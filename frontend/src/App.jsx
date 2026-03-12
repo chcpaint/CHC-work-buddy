@@ -510,7 +510,7 @@ function VideoResultsRow({ media, onPlay, theme = "dark" }) {
 }
 
 // ─── Chat Message ─────────────────────────────────────────────
-function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", onSpeak, onStopSpeaking, isSpeaking }) {
+function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", onSpeak, onStopSpeaking, isSpeaking, awaitingContinue, onContinueReading }) {
   const colors = themes[theme];
   return (
     <div style={{
@@ -631,43 +631,65 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
             ))}
           </div>
         )}
-        {/* TTS controls — Read Full Answer / Stop */}
-        {!isUser && message.content && message.content.length > 80 && onSpeak && (
-          <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${colors.border}`, display: "flex", gap: 8 }}>
-            {isSpeaking ? (
-              <button
-                onClick={() => onStopSpeaking && onStopSpeaking()}
-                style={{
-                  background: "rgba(239,68,68,0.15)", color: "#ef4444",
-                  border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8,
-                  padding: "5px 12px", fontSize: 11, fontWeight: 600,
-                  cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.25)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
-              >
-                ■ Stop Reading
-              </button>
-            ) : (
-              <button
-                onClick={() => onSpeak(message.content, { fullRead: true })}
-                style={{
-                  background: `${colors.accentSecondary}15`, color: colors.accentSecondary,
-                  border: `1px solid ${colors.accentSecondary}30`, borderRadius: 8,
-                  padding: "5px 12px", fontSize: 11, fontWeight: 600,
-                  cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = `${colors.accentSecondary}25`}
-                onMouseLeave={e => e.currentTarget.style.background = `${colors.accentSecondary}15`}
-              >
-                🔊 Read Full Answer
-              </button>
-            )}
-          </div>
-        )}
       </div>
+      {/* Shop-friendly TTS controls — large buttons for dirty/gloved hands */}
+      {!isUser && message.content && message.content.length > 80 && onSpeak && (
+        <div style={{ alignSelf: "flex-end", marginLeft: 4, marginBottom: 4, zIndex: 2, display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* Listening/Awaiting Continue — large pulsing "Yes / Read it" button */}
+          {awaitingContinue ? (
+            <button
+              onClick={() => onContinueReading && onContinueReading()}
+              title="Read full answer"
+              style={{
+                background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "white",
+                border: "none", borderRadius: 28,
+                width: 56, height: 56, fontSize: 11, fontWeight: 700,
+                cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 20px rgba(34,197,94,0.5)",
+                animation: "pulseGlow 1.5s ease-in-out infinite",
+                lineHeight: 1.2, letterSpacing: 0.3,
+              }}
+            >
+              <span style={{ fontSize: 18, marginBottom: 1 }}>🎙️</span>
+              <span style={{ fontSize: 8 }}>or tap</span>
+            </button>
+          ) : isSpeaking ? (
+            <button
+              onClick={() => onStopSpeaking && onStopSpeaking()}
+              title="Stop reading"
+              style={{
+                background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "white",
+                border: "none", borderRadius: 28,
+                width: 56, height: 56, fontSize: 20,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 16px rgba(239,68,68,0.5)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+            >
+              ■
+            </button>
+          ) : (
+            <button
+              onClick={() => onSpeak(message.content, { fullRead: true })}
+              title="Read full answer"
+              style={{
+                background: `linear-gradient(135deg, ${colors.accentSecondary}, ${colors.accentSecondary}cc)`, color: "white",
+                border: "none", borderRadius: 28,
+                width: 56, height: 56, fontSize: 22,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: `0 4px 16px ${colors.accentSecondary}50`,
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+            >
+              🔊
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1283,27 +1305,23 @@ export default function App() {
     return summary;
   }, [cleanForSpeech]);
 
-  const speak = useCallback((text, { fullRead = false } = {}) => {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+  // Track whether Max is waiting for "continue" voice command
+  const [awaitingContinue, setAwaitingContinue] = useState(false);
+  const pendingFullTextRef = useRef(null);
+  const continueListenerRef = useRef(null);
 
-    const clean = cleanForSpeech(text);
-    // Short mode: just the summary. Full mode: up to 2000 chars.
-    const toSpeak = fullRead ? clean.slice(0, 2000) : getShortSummary(clean);
-
-    const utterance = new SpeechSynthesisUtterance(toSpeak);
+  // Helper to create a configured utterance with the right voice
+  const createUtterance = useCallback((text) => {
+    const utterance = new SpeechSynthesisUtterance(text);
     const langCode = language === "fr" ? "fr-CA" : language === "es" ? "es-MX" : "en-US";
     const langPrefix = langCode.slice(0, 2);
     utterance.lang = langCode;
-    utterance.rate = 0.92;   // Slightly slower — mature, authoritative
-    utterance.pitch = 0.85;  // Lower pitch — middle-aged male
-
-    // Use cached voice — already locked in
+    utterance.rate = 0.92;
+    utterance.pitch = 0.85;
     const cachedVoice = voiceCacheRef.current[langPrefix];
     if (cachedVoice) {
       utterance.voice = cachedVoice;
     } else {
-      // Emergency fallback — voices not loaded yet, try once more
       const voices = window.speechSynthesis.getVoices();
       const preferred = PREFERRED_MALE_VOICES[langPrefix] || PREFERRED_MALE_VOICES.en;
       for (const name of preferred) {
@@ -1311,16 +1329,115 @@ export default function App() {
         if (match) { utterance.voice = match; voiceCacheRef.current[langPrefix] = match; break; }
       }
     }
+    return utterance;
+  }, [language, PREFERRED_MALE_VOICES]);
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-  }, [language, PREFERRED_MALE_VOICES, getShortSummary]);
+  // Start a brief voice listener for "continue" / "yes" / "read it" commands
+  const startContinueListener = useCallback((fullText) => {
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const listener = new SR();
+    listener.continuous = false;
+    listener.interimResults = false;
+    listener.lang = language === "fr" ? "fr-CA" : language === "es" ? "es-MX" : "en-US";
+
+    const continueWords = language === "fr"
+      ? ["oui", "continue", "lis", "vas-y", "lire", "go"]
+      : language === "es"
+      ? ["si", "sí", "continua", "lee", "dale", "leer", "go"]
+      : ["yes", "yeah", "continue", "read", "go", "go ahead", "read it", "keep going", "sure", "yep", "okay"];
+
+    listener.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.toLowerCase().trim() || "";
+      const shouldContinue = continueWords.some(w => transcript.includes(w));
+      if (shouldContinue && pendingFullTextRef.current) {
+        setAwaitingContinue(false);
+        // Speak the full answer
+        const utt = createUtterance(pendingFullTextRef.current.slice(0, 2000));
+        utt.onstart = () => setIsSpeaking(true);
+        utt.onend = () => { setIsSpeaking(false); pendingFullTextRef.current = null; };
+        utt.onerror = () => { setIsSpeaking(false); pendingFullTextRef.current = null; };
+        window.speechSynthesis.speak(utt);
+      } else {
+        setAwaitingContinue(false);
+        pendingFullTextRef.current = null;
+      }
+    };
+    listener.onerror = () => { setAwaitingContinue(false); };
+    listener.onend = () => {
+      // If no response heard after timeout, just dismiss
+      setTimeout(() => { setAwaitingContinue(false); }, 500);
+    };
+
+    continueListenerRef.current = listener;
+    try { listener.start(); } catch(e) { /* already listening */ }
+
+    // Auto-timeout after 6 seconds if no voice detected
+    setTimeout(() => {
+      try { listener.stop(); } catch(e) {}
+      setAwaitingContinue(false);
+    }, 6000);
+  }, [language, createUtterance]);
+
+  const speak = useCallback((text, { fullRead = false } = {}) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    setAwaitingContinue(false);
+    pendingFullTextRef.current = null;
+
+    const clean = cleanForSpeech(text);
+    const isLongAnswer = clean.length > 200;
+
+    if (fullRead) {
+      // Direct full read — user tapped the button or said "continue"
+      const utterance = createUtterance(clean.slice(0, 2000));
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      return;
+    }
+
+    // Short summary first
+    const summary = getShortSummary(clean);
+    const summaryUtterance = createUtterance(summary);
+    summaryUtterance.onstart = () => setIsSpeaking(true);
+
+    summaryUtterance.onend = () => {
+      setIsSpeaking(false);
+      // If the answer is long, ask if they want to hear the rest
+      if (isLongAnswer) {
+        pendingFullTextRef.current = clean;
+        setAwaitingContinue(true);
+
+        const promptText = language === "fr"
+          ? "Voulez-vous que je lise la réponse complète?"
+          : language === "es"
+          ? "¿Quieres que lea la respuesta completa?"
+          : "Want me to read the full answer?";
+
+        const promptUtterance = createUtterance(promptText);
+        promptUtterance.rate = 0.95;
+        promptUtterance.onstart = () => setIsSpeaking(true);
+        promptUtterance.onend = () => {
+          setIsSpeaking(false);
+          // Start listening for voice command
+          startContinueListener(clean);
+        };
+        promptUtterance.onerror = () => setIsSpeaking(false);
+        window.speechSynthesis.speak(promptUtterance);
+      }
+    };
+    summaryUtterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(summaryUtterance);
+  }, [language, PREFERRED_MALE_VOICES, getShortSummary, createUtterance, startContinueListener]);
 
   const stopSpeaking = useCallback(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setIsSpeaking(false);
+    setAwaitingContinue(false);
+    pendingFullTextRef.current = null;
+    try { continueListenerRef.current?.stop(); } catch(e) {}
   }, []);
 
   const toggleListening = () => {
@@ -1865,6 +1982,7 @@ export default function App() {
         @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes pulseGlow { 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 4px 20px rgba(34,197,94,0.5); } 50% { opacity: 0.85; transform: scale(1.08); box-shadow: 0 4px 30px rgba(34,197,94,0.7); } }
         @keyframes shimmer { 0%, 100% { box-shadow: 0 0 20px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.5); } 50% { box-shadow: 0 0 30px rgba(6,182,212,0.5), 0 4px 20px rgba(0,0,0,0.5); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .tab-btn:hover { opacity: 1 !important; }
@@ -2970,11 +3088,14 @@ export default function App() {
 
             {/* Messages */}
             <div style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 4 }}>
-              {messages.map((msg, i) => (
+              {messages.map((msg, i) => {
+                const isLastAssistant = msg.role === "assistant" && !messages.slice(i + 1).some(m => m.role === "assistant");
+                return (
                 <div key={i} style={{ animation: "fadeIn 0.3s ease" }}>
-                  <ChatMessage message={msg} isUser={msg.role === "user"} onPlayVideo={setMediaViewer} onOpenDoc={setDocViewer} theme={theme} onSpeak={speak} onStopSpeaking={stopSpeaking} isSpeaking={isSpeaking} />
+                  <ChatMessage message={msg} isUser={msg.role === "user"} onPlayVideo={setMediaViewer} onOpenDoc={setDocViewer} theme={theme} onSpeak={speak} onStopSpeaking={stopSpeaking} isSpeaking={isSpeaking} awaitingContinue={isLastAssistant && awaitingContinue} onContinueReading={() => { setAwaitingContinue(false); if (pendingFullTextRef.current) { speak(pendingFullTextRef.current, { fullRead: true }); pendingFullTextRef.current = null; } }} />
                 </div>
-              ))}
+                );
+              })}
               {isLoading && (
                 <div style={{ display: "flex", gap: 6, padding: "12px 14px", color: colors.textSecondary, fontSize: 13, alignItems: "center" }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", animation: "ping 1s ease infinite", background: colors.accentPrimary }}></div>
