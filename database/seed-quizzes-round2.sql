@@ -206,24 +206,24 @@ INSERT INTO public.quiz_answers (question_id, answer_order, answer_text_en, answ
   ('b1000001-0001-0001-0005-000000000001', 3, 'Final polish after clearcoat', 'Polissage final après vernis', 'Pulido final después del barniz', false),
   ('b1000001-0001-0001-0005-000000000001', 4, 'Remove orange peel from paint', 'Enlever la peau d''orange de la peinture', 'Eliminar la cáscara de naranja', false);
 
--- Q2: SU4902 flash time
+-- Q2: SU470LV dry time (updated from SU4902 — SU470LV is the current 1K adhesion promoter)
 INSERT INTO public.quiz_questions (id, quiz_id, question_order, question_text_en, question_text_fr, question_text_es, question_type, explanation_en, explanation_fr, explanation_es)
 VALUES (
   'b1000001-0001-0001-0005-000000000002',
   'a1000001-0001-0001-0001-000000000005', 2,
-  'How long should PPG SU4902 Plastic Adhesion Prep flash before the next step?',
-  'Combien de temps le SU4902 doit-il sécher avant l''étape suivante?',
-  '¿Cuánto tiempo debe evaporarse el SU4902 antes del siguiente paso?',
+  'How long should PPG SU470LV 1K Adhesion Promoter dry before top coating at 70°F (21°C)?',
+  'Combien de temps le SU470LV doit-il sécher avant d''appliquer la couche suivante à 70°F (21°C)?',
+  '¿Cuánto tiempo debe secarse el SU470LV antes de aplicar la capa siguiente a 70°F (21°C)?',
   'multiple-choice',
-  'PPG SOP: Apply SU4902 wiping in one direction, then allow 3-5 minutes flash time.',
-  'SOP PPG: Appliquer le SU4902 en essuyant dans une direction, laisser 3-5 minutes.',
-  'SOP PPG: Aplicar el SU4902 limpiando en una dirección, dejar 3-5 minutos.'
+  'PPG TDS OC-35: SU470LV requires 10 minutes dry time at 70°F (21°C) before top coating. Apply 1 medium wet coat — ready to spray, no mixing required. If more than 1 hour passes, lightly sand, re-clean, and reapply.',
+  'TDS PPG OC-35: Le SU470LV nécessite 10 minutes de séchage à 70°F (21°C) avant la couche suivante. Appliquer 1 couche humide moyenne — prêt à pulvériser, aucun mélange requis. Si plus d''une heure, poncer légèrement, re-nettoyer et réappliquer.',
+  'TDS PPG OC-35: El SU470LV requiere 10 minutos de secado a 70°F (21°C) antes de la capa siguiente. Aplicar 1 capa húmeda media — listo para rociar, sin mezcla requerida. Si pasa más de 1 hora, lijar ligeramente, limpiar y volver a aplicar.'
 );
 INSERT INTO public.quiz_answers (question_id, answer_order, answer_text_en, answer_text_fr, answer_text_es, is_correct) VALUES
-  ('b1000001-0001-0001-0005-000000000002', 1, '3-5 minutes', '3-5 minutes', '3-5 minutos', true),
-  ('b1000001-0001-0001-0005-000000000002', 2, '15 minutes', '15 minutes', '15 minutos', false),
-  ('b1000001-0001-0001-0005-000000000002', 3, '30 seconds', '30 secondes', '30 segundos', false),
-  ('b1000001-0001-0001-0005-000000000002', 4, 'No flash time — apply next step immediately', 'Pas de séchage — appliquer immédiatement', 'Sin tiempo — aplicar inmediatamente', false);
+  ('b1000001-0001-0001-0005-000000000002', 1, '10 minutes', '10 minutes', '10 minutos', true),
+  ('b1000001-0001-0001-0005-000000000002', 2, '3-5 minutes', '3-5 minutes', '3-5 minutos', false),
+  ('b1000001-0001-0001-0005-000000000002', 3, '30 minutes', '30 minutes', '30 minutos', false),
+  ('b1000001-0001-0001-0005-000000000002', 4, 'No dry time — top coat immediately', 'Pas de séchage — appliquer immédiatement', 'Sin tiempo de secado — aplicar inmediatamente', false);
 
 -- Q3: Pre-primed plastic sanding grit
 INSERT INTO public.quiz_questions (id, quiz_id, question_order, question_text_en, question_text_fr, question_text_es, question_type, explanation_en, explanation_fr, explanation_es)

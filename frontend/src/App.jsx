@@ -746,7 +746,7 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
               }}
             >
               <span style={{ fontSize: 18, marginBottom: 1 }}>🎙️</span>
-              <span style={{ fontSize: 8 }}>or tap</span>
+              <span style={{ fontSize: 8 }}>Say YES</span>
             </button>
           ) : isSpeaking ? (
             <button
@@ -1351,12 +1351,15 @@ export default function App() {
   }, [language]);
 
   // Start a brief voice listener for "continue" / "yes" / "read it" commands
+  // Uses interimResults for near-instant detection + debounce to prevent repeats
+  const continueTriggeredRef = useRef(false);
   const startContinueListener = useCallback((fullText) => {
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
+    continueTriggeredRef.current = false;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const listener = new SR();
-    listener.continuous = false;
-    listener.interimResults = false;
+    listener.continuous = true;        // Keep listening for the full timeout
+    listener.interimResults = true;    // React to partial speech instantly
     listener.lang = language === "fr" ? "fr-CA" : language === "es" ? "es-MX" : "en-US";
 
     const continueWords = language === "fr"
@@ -1366,35 +1369,44 @@ export default function App() {
       : ["yes", "yeah", "continue", "read", "go", "go ahead", "read it", "keep going", "sure", "yep", "okay"];
 
     listener.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript?.toLowerCase().trim() || "";
-      const shouldContinue = continueWords.some(w => transcript.includes(w));
-      if (shouldContinue && pendingFullTextRef.current) {
-        setAwaitingContinue(false);
-        const fullClean = pendingFullTextRef.current;
-        pendingFullTextRef.current = null;
-        playCloudTTS(fullClean, {
-          onStart: () => setIsSpeaking(true),
-          onEnd: () => setIsSpeaking(false),
-          onError: () => setIsSpeaking(false),
-        });
-      } else {
-        setAwaitingContinue(false);
-        pendingFullTextRef.current = null;
+      // Check ALL results including interim (partial) ones for speed
+      for (let i = 0; i < event.results.length; i++) {
+        const transcript = event.results[i][0]?.transcript?.toLowerCase().trim() || "";
+        const shouldContinue = continueWords.some(w => transcript.includes(w));
+        if (shouldContinue && pendingFullTextRef.current && !continueTriggeredRef.current) {
+          continueTriggeredRef.current = true; // Debounce — only trigger once
+          try { listener.stop(); } catch(e) {}
+          setAwaitingContinue(false);
+          const fullClean = pendingFullTextRef.current;
+          pendingFullTextRef.current = null;
+          playCloudTTS(fullClean, {
+            onStart: () => setIsSpeaking(true),
+            onEnd: () => setIsSpeaking(false),
+            onError: () => setIsSpeaking(false),
+          });
+          return;
+        }
       }
     };
-    listener.onerror = () => { setAwaitingContinue(false); };
+    listener.onerror = () => {
+      if (!continueTriggeredRef.current) setAwaitingContinue(false);
+    };
     listener.onend = () => {
-      setTimeout(() => { setAwaitingContinue(false); }, 500);
+      if (!continueTriggeredRef.current) {
+        setTimeout(() => { setAwaitingContinue(false); }, 300);
+      }
     };
 
     continueListenerRef.current = listener;
     try { listener.start(); } catch(e) {}
 
-    // Auto-timeout after 6 seconds
+    // Auto-timeout after 10 seconds
     setTimeout(() => {
-      try { listener.stop(); } catch(e) {}
-      setAwaitingContinue(false);
-    }, 6000);
+      if (!continueTriggeredRef.current) {
+        try { listener.stop(); } catch(e) {}
+        setAwaitingContinue(false);
+      }
+    }, 10000);
   }, [language, playCloudTTS]);
 
   const speak = useCallback(async (text, { fullRead = false } = {}) => {
@@ -1421,32 +1433,21 @@ export default function App() {
       return;
     }
 
-    // Speak summary via cloud TTS, then prompt for full read if long
+    // Speak summary via cloud TTS, then immediately listen for "yes" / "continue"
+    // Skips the slow "Want me to read?" cloud prompt — just starts listening right away
     const summary = getShortSummary(clean);
     setIsSpeaking(true);
 
     await playCloudTTS(summary, {
       onStart: () => setIsSpeaking(true),
-      onEnd: async () => {
+      onEnd: () => {
         setIsSpeaking(false);
         if (isLongAnswer) {
           pendingFullTextRef.current = clean;
           setAwaitingContinue(true);
-
-          const promptText = language === "fr"
-            ? "Voulez-vous que je lise la réponse complète?"
-            : language === "es"
-            ? "¿Quieres que lea la respuesta completa?"
-            : "Want me to read the full answer?";
-
-          await playCloudTTS(promptText, {
-            onStart: () => setIsSpeaking(true),
-            onEnd: () => {
-              setIsSpeaking(false);
-              startContinueListener(clean);
-            },
-            onError: () => setIsSpeaking(false),
-          });
+          // Start listening immediately — no second TTS prompt needed
+          // The UI shows a green "Say yes / continue" indicator
+          startContinueListener(clean);
         }
       },
       onError: () => setIsSpeaking(false),
