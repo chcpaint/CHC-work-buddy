@@ -1285,6 +1285,7 @@ export default function App() {
   const continueListenerRef = useRef(null);
   const ttsAudioRef = useRef(null);  // Current playing Audio element
   const ttsGenRef = useRef(0);       // Generation counter — cancels stale TTS calls
+  const prefetchedAudioRef = useRef(null);  // Pre-fetched continuation audio blob URL
 
   // ── Cloud TTS only — no browser voice fallback ──
   // Uses generation counter: each new call increments the counter. If a stale
@@ -1371,10 +1372,47 @@ export default function App() {
     }
   }, [language]);
 
+  // Pre-fetch TTS audio without playing — returns blob URL for instant playback later
+  const prefetchTTS = useCallback(async (text) => {
+    try {
+      console.log("[TTS] Pre-fetching remainder audio, length:", text.length);
+      const res = await authFetch(`${API_BASE}/api/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, language }),
+      });
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      if (blob.size < 100) return null;
+      const url = URL.createObjectURL(blob);
+      console.log("[TTS] Pre-fetch complete:", blob.size, "bytes ready");
+      return url;
+    } catch (err) {
+      console.warn("[TTS] Pre-fetch failed:", err.message);
+      return null;
+    }
+  }, [language]);
+
+  // Play pre-fetched audio instantly (no API call needed)
+  const playPrefetched = useCallback((blobUrl, { onStart, onEnd, onError } = {}) => {
+    if (ttsAudioRef.current) {
+      try { ttsAudioRef.current.pause(); } catch(e) {}
+      ttsAudioRef.current.src = "";
+      ttsAudioRef.current = null;
+    }
+    const audio = new Audio(blobUrl);
+    audio.volume = 1.0;
+    ttsAudioRef.current = audio;
+    audio.onplay = () => { console.log("[TTS] Playing pre-fetched audio"); onStart?.(); };
+    audio.onended = () => { URL.revokeObjectURL(blobUrl); ttsAudioRef.current = null; onEnd?.(); };
+    audio.onerror = (e) => { URL.revokeObjectURL(blobUrl); ttsAudioRef.current = null; onError?.(); };
+    audio.play().catch(() => { onError?.(); });
+  }, []);
+
   // Start a brief voice listener for "continue" / "yes" / "read it" commands
   // Uses interimResults for near-instant detection + debounce to prevent repeats
   const continueTriggeredRef = useRef(false);
-  const startContinueListener = useCallback((fullText) => {
+  const startContinueListener = useCallback((remainderText) => {
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
     continueTriggeredRef.current = false;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1398,13 +1436,26 @@ export default function App() {
           continueTriggeredRef.current = true; // Debounce — only trigger once
           try { listener.stop(); } catch(e) {}
           setAwaitingContinue(false);
-          const fullClean = pendingFullTextRef.current;
+          const remainderClean = pendingFullTextRef.current;
           pendingFullTextRef.current = null;
-          playCloudTTS(fullClean, {
-            onStart: () => setIsSpeaking(true),
-            onEnd: () => setIsSpeaking(false),
-            onError: () => setIsSpeaking(false),
-          });
+          // Use pre-fetched audio for instant playback, fall back to live TTS
+          const prefetched = prefetchedAudioRef.current;
+          prefetchedAudioRef.current = null;
+          if (prefetched) {
+            console.log("[TTS] Using pre-fetched remainder — instant playback");
+            playPrefetched(prefetched, {
+              onStart: () => setIsSpeaking(true),
+              onEnd: () => setIsSpeaking(false),
+              onError: () => setIsSpeaking(false),
+            });
+          } else {
+            console.log("[TTS] No pre-fetch ready, fetching remainder live");
+            playCloudTTS(remainderClean.slice(0, 3000), {
+              onStart: () => setIsSpeaking(true),
+              onEnd: () => setIsSpeaking(false),
+              onError: () => setIsSpeaking(false),
+            });
+          }
           return;
         }
       }
@@ -1428,7 +1479,7 @@ export default function App() {
         setAwaitingContinue(false);
       }
     }, 10000);
-  }, [language, playCloudTTS]);
+  }, [language, playCloudTTS, playPrefetched]);
 
   const speak = useCallback(async (text, { fullRead = false } = {}) => {
     // Stop any current audio (generation counter in playCloudTTS handles the rest)
@@ -1440,12 +1491,17 @@ export default function App() {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setAwaitingContinue(false);
     pendingFullTextRef.current = null;
+    // Clean up any stale pre-fetched audio
+    if (prefetchedAudioRef.current) {
+      try { URL.revokeObjectURL(prefetchedAudioRef.current); } catch(e) {}
+      prefetchedAudioRef.current = null;
+    }
 
     const clean = cleanForSpeech(text);
     const isLongAnswer = clean.length > 200;
 
     if (fullRead) {
-      // Direct full read — user tapped the button or said "continue"
+      // Direct full read — remainder only (already stripped of summary)
       await playCloudTTS(clean.slice(0, 3000), {
         onStart: () => setIsSpeaking(true),
         onEnd: () => setIsSpeaking(false),
@@ -1455,25 +1511,40 @@ export default function App() {
     }
 
     // Speak summary via cloud TTS, then immediately listen for "yes" / "continue"
-    // Skips the slow "Want me to read?" cloud prompt — just starts listening right away
     const summary = getShortSummary(clean);
     setIsSpeaking(true);
+
+    // Compute remainder (everything after the summary) so we never repeat
+    const remainder = clean.slice(summary.length).trim();
+    const hasRemainder = remainder.length > 20;
+
+    // Start pre-fetching the remainder audio NOW while summary plays
+    // This way it's ready instantly when the user says "yes"
+    if (isLongAnswer && hasRemainder) {
+      console.log("[TTS] Pre-fetching remainder while summary plays, remainder length:", remainder.length);
+      prefetchTTS(remainder.slice(0, 3000)).then((blobUrl) => {
+        if (blobUrl) {
+          prefetchedAudioRef.current = blobUrl;
+          console.log("[TTS] Remainder audio pre-fetched and ready");
+        }
+      });
+    }
 
     await playCloudTTS(summary, {
       onStart: () => setIsSpeaking(true),
       onEnd: () => {
         setIsSpeaking(false);
-        if (isLongAnswer) {
-          pendingFullTextRef.current = clean;
+        if (isLongAnswer && hasRemainder) {
+          // Store REMAINDER only — not the full text
+          pendingFullTextRef.current = remainder;
           setAwaitingContinue(true);
           // Start listening immediately — no second TTS prompt needed
-          // The UI shows a green "Say yes / continue" indicator
-          startContinueListener(clean);
+          startContinueListener(remainder);
         }
       },
       onError: () => setIsSpeaking(false),
     });
-  }, [language, getShortSummary, cleanForSpeech, playCloudTTS, startContinueListener]);
+  }, [language, getShortSummary, cleanForSpeech, playCloudTTS, prefetchTTS, startContinueListener]);
 
   const stopSpeaking = useCallback(() => {
     // Stop cloud TTS audio
@@ -1487,6 +1558,11 @@ export default function App() {
     setIsSpeaking(false);
     setAwaitingContinue(false);
     pendingFullTextRef.current = null;
+    // Clean up pre-fetched audio
+    if (prefetchedAudioRef.current) {
+      try { URL.revokeObjectURL(prefetchedAudioRef.current); } catch(e) {}
+      prefetchedAudioRef.current = null;
+    }
     try { continueListenerRef.current?.stop(); } catch(e) {}
   }, []);
 
@@ -3193,7 +3269,7 @@ export default function App() {
                 const isLastAssistant = msg.role === "assistant" && !messages.slice(i + 1).some(m => m.role === "assistant");
                 return (
                 <div key={i} style={{ animation: "fadeIn 0.3s ease" }}>
-                  <ChatMessage message={msg} isUser={msg.role === "user"} onPlayVideo={setMediaViewer} onOpenDoc={setDocViewer} theme={theme} onSpeak={speak} onStopSpeaking={stopSpeaking} isSpeaking={isSpeaking} awaitingContinue={isLastAssistant && awaitingContinue} onContinueReading={() => { setAwaitingContinue(false); if (pendingFullTextRef.current) { speak(pendingFullTextRef.current, { fullRead: true }); pendingFullTextRef.current = null; } }} />
+                  <ChatMessage message={msg} isUser={msg.role === "user"} onPlayVideo={setMediaViewer} onOpenDoc={setDocViewer} theme={theme} onSpeak={speak} onStopSpeaking={stopSpeaking} isSpeaking={isSpeaking} awaitingContinue={isLastAssistant && awaitingContinue} onContinueReading={() => { setAwaitingContinue(false); try { continueListenerRef.current?.stop(); } catch(e) {} if (pendingFullTextRef.current) { const remainder = pendingFullTextRef.current; pendingFullTextRef.current = null; const prefetched = prefetchedAudioRef.current; prefetchedAudioRef.current = null; if (prefetched) { playPrefetched(prefetched, { onStart: () => setIsSpeaking(true), onEnd: () => setIsSpeaking(false), onError: () => setIsSpeaking(false) }); } else { speak(remainder, { fullRead: true }); } } }} />
                 </div>
                 );
               })}
