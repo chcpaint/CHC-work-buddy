@@ -144,14 +144,48 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
         animation: "shimmer 3s ease-in-out infinite",
       }}>
         <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
-          {/* Background */}
-          <rect width="120" height="120" fill="#0f2040" rx="60" />
+          {/* Gradient Definitions */}
+          <defs>
+            <radialGradient id="skinGradient" cx="40%" cy="35%">
+              <stop offset="0%" stopColor="#d8a680" />
+              <stop offset="100%" stopColor="#b8845c" />
+            </radialGradient>
+            <radialGradient id="hairGradient" cx="50%" cy="30%">
+              <stop offset="0%" stopColor="#5a5a5a" />
+              <stop offset="100%" stopColor="#3a3a3a" />
+            </radialGradient>
+            <radialGradient id="coverallsGradient" cx="50%" cy="30%">
+              <stop offset="0%" stopColor="#4a5058" />
+              <stop offset="100%" stopColor="#2a2d32" />
+            </radialGradient>
+            <radialGradient id="glassGradient" cx="30%" cy="30%">
+              <stop offset="0%" stopColor="#99d4ff" />
+              <stop offset="100%" stopColor="#4499dd" />
+            </radialGradient>
+            <filter id="avatarShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+              <feOffset dx="0" dy="3" result="offsetblur" />
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.3" />
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
-          {/* Coveralls body — charcoal gray mechanic suit */}
-          <rect x="18" y="92" width="84" height="32" rx="8" fill="#3a3d42" />
+          {/* Background with subtle gradient */}
+          <rect width="120" height="120" fill="#0f2040" rx="60" />
+          <ellipse cx="60" cy="60" rx="58" ry="58" fill="url(#skinGradient)" opacity="0.08" />
+
+          {/* Coveralls body — charcoal gray mechanic suit with gradient */}
+          <rect x="18" y="92" width="84" height="32" rx="8" fill="url(#coverallsGradient)" />
           {/* Coverall shoulders */}
-          <path d="M18 100 Q18 88 35 85 L46 85 L46 100Z" fill="#3a3d42" />
-          <path d="M102 100 Q102 88 85 85 L74 85 L74 100Z" fill="#3a3d42" />
+          <path d="M18 100 Q18 88 35 85 L46 85 L46 100Z" fill="url(#coverallsGradient)" />
+          <path d="M102 100 Q102 88 85 85 L74 85 L74 100Z" fill="url(#coverallsGradient)" />
+          {/* Subtle shadow under coveralls */}
+          <rect x="18" y="122" width="84" height="4" rx="2" fill="rgba(0,0,0,0.2)" />
           {/* Coverall collar — folded down */}
           <path d="M42 88 L38 96 L48 92Z" fill="#4a4e54" />
           <path d="M78 88 L82 96 L72 92Z" fill="#4a4e54" />
@@ -187,50 +221,70 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
           <path d="M38 84 Q42 81 46 83" stroke="#555960" strokeWidth="0.8" fill="none" />
           <path d="M82 84 Q78 81 74 83" stroke="#555960" strokeWidth="0.8" fill="none" />
 
-          {/* Head */}
-          <ellipse cx="60" cy="55" rx="28" ry="30" fill="#c8956c" />
+          {/* Head with radial gradient for depth */}
+          <ellipse cx="60" cy="55" rx="28" ry="30" fill="url(#skinGradient)" />
+          {/* Subtle highlight on forehead */}
+          <ellipse cx="60" cy="40" rx="16" ry="8" fill="white" opacity="0.08" />
+          {/* Shadow under chin/jaw */}
+          <ellipse cx="60" cy="82" rx="24" ry="6" fill="rgba(0,0,0,0.15)" />
 
-          {/* Hair - salt & pepper, short */}
-          <path d="M32 45 Q34 25 60 22 Q86 25 88 45 Q84 30 60 28 Q36 30 32 45Z" fill="#4a4a4a" />
-          <path d="M34 38 Q33 30 38 27" stroke="#6a6a6a" strokeWidth="2" fill="none" />
-          <path d="M86 38 Q87 30 82 27" stroke="#6a6a6a" strokeWidth="2" fill="none" />
+          {/* Hair - salt & pepper, short with gradient and smooth curves */}
+          <path d="M32 45 Q34 25 60 22 Q86 25 88 45 Q84 30 60 28 Q36 30 32 45Z" fill="url(#hairGradient)" />
+          {/* Hair texture lines - smoother curves */}
+          <path d="M34 38 Q33 30 38 27" stroke="#7a7a7a" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.6" />
+          <path d="M86 38 Q87 30 82 27" stroke="#7a7a7a" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.6" />
+          <path d="M44 32 Q45 26 50 24" stroke="#6a6a6a" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
+          <path d="M76 32 Q75 26 70 24" stroke="#6a6a6a" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
 
           {/* Ears */}
           <ellipse cx="32" cy="55" rx="5" ry="7" fill="#b8845c" />
           <ellipse cx="88" cy="55" rx="5" ry="7" fill="#b8845c" />
 
-          {/* Safety glasses pushed up on forehead */}
-          <path d="M36 38 Q42 36 48 38" stroke="#66b2ff" strokeWidth="2" fill="none" opacity="0.6" />
-          <path d="M72 38 Q78 36 84 38" stroke="#66b2ff" strokeWidth="2" fill="none" opacity="0.6" />
-          <line x1="48" y1="38" x2="72" y2="38" stroke="#66b2ff" strokeWidth="1" opacity="0.4" />
+          {/* Safety glasses pushed up on forehead - polished */}
+          <ellipse cx="42" cy="37" rx="8" ry="6" fill="url(#glassGradient)" opacity="0.7" stroke="#4499dd" strokeWidth="1.5" />
+          <ellipse cx="78" cy="37" rx="8" ry="6" fill="url(#glassGradient)" opacity="0.7" stroke="#4499dd" strokeWidth="1.5" />
+          <path d="M50 37 Q60 36 70 37" stroke="#4499dd" strokeWidth="1" opacity="0.5" strokeLinecap="round" />
+          {/* Glass shine/glint */}
+          <ellipse cx="40" cy="35" rx="3" ry="2" fill="white" opacity="0.4" />
+          <ellipse cx="76" cy="35" rx="3" ry="2" fill="white" opacity="0.4" />
 
-          {/* Eyes */}
-          <ellipse cx="48" cy="52" rx="8" ry={eyeBlink ? 1 : 6} fill="white" />
-          <ellipse cx="72" cy="52" rx="8" ry={eyeBlink ? 1 : 6} fill="white" />
+          {/* Eyes - softer, rounder appearance */}
+          <ellipse cx="48" cy="52" rx="8.5" ry={eyeBlink ? 1 : 6.5} fill="white" rx="8.5" />
+          <ellipse cx="72" cy="52" rx="8.5" ry={eyeBlink ? 1 : 6.5} fill="white" rx="8.5" />
+          {/* Slight white highlight for glossy effect */}
+          <circle cx="48" cy="50" r="3.5" fill="rgba(255,255,255,0.3)" opacity="0.5" />
+          <circle cx="72" cy="50" r="3.5" fill="rgba(255,255,255,0.3)" opacity="0.5" />
+          {/* Pupils */}
           <circle cx="50" cy="53" r="3.5" fill="#3d2b1f" />
           <circle cx="74" cy="53" r="3.5" fill="#3d2b1f" />
-          <circle cx="51" cy="51" r="1" fill="white" />
-          <circle cx="75" cy="51" r="1" fill="white" />
-          {/* Eyebrows */}
-          <path d="M41 44 Q48 41 55 44" stroke="#3a3a3a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          <path d="M65 44 Q72 41 79 44" stroke="#3a3a3a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          {/* Subtle eye shine */}
+          <circle cx="51" cy="51" r="1.2" fill="white" />
+          <circle cx="75" cy="51" r="1.2" fill="white" />
+          {/* Eyebrows - softer curves */}
+          <path d="M41 44 Q48 40.5 55 44" stroke="#3d3d3d" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.8" />
+          <path d="M65 44 Q72 40.5 79 44" stroke="#3d3d3d" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.8" />
 
-          {/* Nose */}
-          <path d="M58 55 Q56 62 58 65 Q60 67 62 65 Q64 62 62 55" stroke="#a06040" strokeWidth="1.5" fill="none" />
+          {/* Nose - smoother curves */}
+          <path d="M59 55 Q57 61 59 64 Q60 65.5 61 64 Q63 61 61 55" stroke="#a86450" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7" />
 
-          {/* Mouth */}
+          {/* Mouth - smoother, more natural */}
           <path
             d={mouthOpen
               ? "M50 74 Q60 82 70 74 Q60 78 50 74Z"
-              : "M50 73 Q60 78 70 73"}
-            stroke="#8b4040" strokeWidth="2" fill={mouthOpen ? "#5a1a1a" : "none"} strokeLinecap="round"
+              : "M50 73 Q60 77 70 73"}
+            stroke="#8b5555" strokeWidth="1.8" fill={mouthOpen ? "#6a2a2a" : "none"} strokeLinecap="round"
           />
-          {/* Teeth visible when talking */}
-          {mouthOpen && <rect x="54" y="74" width="12" height="4" rx="1" fill="white" opacity="0.9" />}
+          {/* Teeth visible when talking - glossier */}
+          {mouthOpen && (
+            <>
+              <rect x="54" y="75" width="12" height="3" rx="1" fill="white" opacity="0.95" />
+              <rect x="54" y="75" width="12" height="1" rx="0.5" fill="rgba(255,255,255,0.3)" opacity="0.6" />
+            </>
+          )}
 
-          {/* Slight smile lines / character */}
-          <path d="M44 68 Q46 70 44 72" stroke="#a06040" strokeWidth="1" fill="none" />
-          <path d="M76 68 Q74 70 76 72" stroke="#a06040" strokeWidth="1" fill="none" />
+          {/* Subtle smile lines / character */}
+          <path d="M44 68 Q45 69.5 44 71" stroke="#a87050" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.5" />
+          <path d="M76 68 Q75 69.5 76 71" stroke="#a87050" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.5" />
 
           {/* Status ring */}
           {isListening && (
@@ -390,24 +444,29 @@ function DocCard({ doc, onClick, theme = "dark" }) {
     <div
       onClick={onClick}
       style={{
-        background: colors.surface,
-        border: `1px solid ${colors.border}`,
-        borderRadius: 14,
+        background: `linear-gradient(135deg, ${colors.surface}, ${colors.surfaceLight})`,
+        border: `1.5px solid ${colors.border}`,
+        borderRadius: 16,
         padding: 16,
         cursor: "pointer",
-        transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
         display: "flex", gap: 12, alignItems: "flex-start",
         backdropFilter: "blur(20px)",
-        boxShadow: `0 4px 20px rgba(0,0,0,0.08), inset 1px 1px 0 ${colors.border}`,
-        transform: "translateY(0)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: `0 8px 24px rgba(0,0,0,0.1), inset 1px 1px 0 ${colors.border}`,
+        transform: "translateY(0) scale(1)",
+        position: "relative",
+        overflow: "hidden",
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
-        e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.15), inset 1px 1px 0 ${colors.border}`;
+        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+        e.currentTarget.style.boxShadow = `0 16px 40px rgba(0,0,0,0.15), inset 1px 1px 0 ${colors.border}`;
+        e.currentTarget.style.borderColor = colors.accentPrimary + "40";
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.08), inset 1px 1px 0 ${colors.border}`;
+        e.currentTarget.style.transform = "translateY(0) scale(1)";
+        e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.1), inset 1px 1px 0 ${colors.border}`;
+        e.currentTarget.style.borderColor = colors.border;
       }}
     >
       <span style={{ fontSize: 24, minWidth: 32 }}>
@@ -534,15 +593,18 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
         padding: "12px 16px",
         borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
         background: isUser
-          ? `linear-gradient(135deg, ${colors.accentSecondary}20, ${colors.accentSecondary}10)`
-          : colors.surface,
-        border: `1px solid ${isUser ? `${colors.accentSecondary}30` : colors.border}`,
+          ? `linear-gradient(135deg, ${colors.accentSecondary}25, ${colors.accentSecondary}12)`
+          : `linear-gradient(135deg, ${colors.surface}, ${colors.surfaceLight})`,
+        border: `1px solid ${isUser ? `${colors.accentSecondary}35` : colors.border}`,
         backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         color: colors.textPrimary,
         fontSize: 13,
         lineHeight: 1.6,
         whiteSpace: "pre-wrap",
-        boxShadow: isUser ? "none" : `inset 1px 1px 0 ${colors.border}`,
+        boxShadow: isUser
+          ? `0 4px 16px ${colors.accentSecondary}20`
+          : `inset 1px 1px 0 ${colors.border}, 0 4px 12px rgba(0,0,0,0.08)`,
       }}>
         {/* Answer Source Badge — clickable */}
         {!isUser && message.answerSource && (
@@ -567,15 +629,38 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
             }
             style={{
               display: "inline-flex", alignItems: "center", gap: 5,
-              padding: "3px 10px", borderRadius: 20, marginBottom: 8,
+              padding: "4px 12px", borderRadius: 20, marginBottom: 8,
               fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase",
-              cursor: "pointer", transition: "all 0.2s ease",
-              background: message.answerSource === "vector" ? "rgba(34,197,94,0.15)" : message.answerSource === "rag" ? "rgba(59,130,246,0.15)" : "rgba(249,115,22,0.15)",
+              cursor: "pointer", transition: "all 0.25s ease",
+              background: message.answerSource === "vector" ? "rgba(34,197,94,0.18)" : message.answerSource === "rag" ? "rgba(59,130,246,0.18)" : "rgba(249,115,22,0.18)",
               color: message.answerSource === "vector" ? "#22c55e" : message.answerSource === "rag" ? "#3b82f6" : "#f97316",
-              border: `1px solid ${message.answerSource === "vector" ? "#22c55e33" : message.answerSource === "rag" ? "#3b82f633" : "#f9731633"}`,
+              border: `1.5px solid ${message.answerSource === "vector" ? "#22c55e40" : message.answerSource === "rag" ? "#3b82f640" : "#f9731640"}`,
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              boxShadow: message.answerSource === "vector"
+                ? "0 0 12px rgba(34,197,94,0.15)"
+                : message.answerSource === "rag"
+                ? "0 0 12px rgba(59,130,246,0.15)"
+                : "0 0 12px rgba(249,115,22,0.15)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.3)"; e.currentTarget.style.transform = "scale(1.05)"; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.transform = "scale(1)"; }}
+            onMouseEnter={e => {
+              e.currentTarget.style.filter = "brightness(1.35)";
+              e.currentTarget.style.transform = "scale(1.08) translateY(-1px)";
+              e.currentTarget.style.boxShadow = message.answerSource === "vector"
+                ? "0 4px 16px rgba(34,197,94,0.3)"
+                : message.answerSource === "rag"
+                ? "0 4px 16px rgba(59,130,246,0.3)"
+                : "0 4px 16px rgba(249,115,22,0.3)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.filter = "brightness(1)";
+              e.currentTarget.style.transform = "scale(1) translateY(0)";
+              e.currentTarget.style.boxShadow = message.answerSource === "vector"
+                ? "0 0 12px rgba(34,197,94,0.15)"
+                : message.answerSource === "rag"
+                ? "0 0 12px rgba(59,130,246,0.15)"
+                : "0 0 12px rgba(249,115,22,0.15)";
+            }}
           >
             <span style={{ fontSize: 8 }}>{message.answerSource === "vector" ? "✅" : message.answerSource === "rag" ? "🔍" : "⚠️"}</span>
             {message.answerSource === "vector" ? "Verified Source" : message.answerSource === "rag" ? "Database Match" : "AI General Knowledge"}
@@ -597,22 +682,27 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
                 onClick={() => onOpenDoc && onOpenDoc({ id: s.id, title: s.title, doc_type: s.docType, tab_slug: s.tabSlug, file_url: s.fileUrl })}
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
-                  padding: "8px 12px", marginBottom: 6,
-                  borderRadius: 10,
-                  background: `${colors.accentPrimary}08`,
-                  border: `1px solid ${colors.accentPrimary}25`,
+                  padding: "10px 14px", marginBottom: 8,
+                  borderRadius: 12,
+                  background: `linear-gradient(135deg, ${colors.accentPrimary}12, ${colors.accentPrimary}06)`,
+                  border: `1.5px solid ${colors.accentPrimary}30`,
                   cursor: "pointer",
-                  transition: "all 0.2s ease",
+                  transition: "all 0.25s ease",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  boxShadow: `0 4px 12px ${colors.accentPrimary}08`,
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = `${colors.accentPrimary}18`;
-                  e.currentTarget.style.borderColor = `${colors.accentPrimary}50`;
-                  e.currentTarget.style.transform = "translateX(4px)";
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${colors.accentPrimary}20, ${colors.accentPrimary}10)`;
+                  e.currentTarget.style.borderColor = `${colors.accentPrimary}60`;
+                  e.currentTarget.style.transform = "translateX(4px) translateY(-1px)";
+                  e.currentTarget.style.boxShadow = `0 8px 20px ${colors.accentPrimary}15`;
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = `${colors.accentPrimary}08`;
-                  e.currentTarget.style.borderColor = `${colors.accentPrimary}25`;
-                  e.currentTarget.style.transform = "translateX(0)";
+                  e.currentTarget.style.background = `linear-gradient(135deg, ${colors.accentPrimary}12, ${colors.accentPrimary}06)`;
+                  e.currentTarget.style.borderColor = `${colors.accentPrimary}30`;
+                  e.currentTarget.style.transform = "translateX(0) translateY(0)";
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${colors.accentPrimary}08`;
                 }}
               >
                 <span style={{ fontSize: 14 }}>
@@ -2054,18 +2144,21 @@ export default function App() {
         .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
       `}</style>
 
-      {/* ── Top Bar ── */}
+      {/* ── Top Bar with enhanced glass-morphism ── */}
       <header style={{
         height: 64,
-        background: colors.surface,
+        background: theme === "dark"
+          ? "rgba(15, 25, 50, 0.5)"
+          : "rgba(255, 255, 255, 0.6)",
         borderBottom: `1px solid ${colors.border}`,
         display: "flex", alignItems: "center",
         padding: "0 20px",
         gap: 16,
-        backdropFilter: "blur(20px)",
+        backdropFilter: "blur(30px)",
+        WebkitBackdropFilter: "blur(30px)",
         zIndex: 100,
         flexShrink: 0,
-        boxShadow: `0 4px 16px rgba(0,0,0,0.08)`,
+        boxShadow: `0 8px 32px ${theme === "dark" ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.08)"}, inset 1px 1px 0 ${colors.border}`,
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 200 }}>
@@ -2194,7 +2287,7 @@ export default function App() {
                 flex: "1 1 0",
                 minWidth: 160,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                background: isActive ? `${tab.color}18` : "transparent",
+                background: isActive ? `${tab.color}20` : "transparent",
                 border: "none",
                 borderBottom: isActive ? `4px solid ${tab.color}` : `4px solid transparent`,
                 color: isActive ? tab.color : "rgba(255,255,255,0.75)",
@@ -2204,18 +2297,21 @@ export default function App() {
                 letterSpacing: 1.8,
                 textTransform: "uppercase",
                 cursor: "pointer",
-                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
                 padding: "0 20px",
                 opacity: isActive ? 1 : 0.85,
                 whiteSpace: "nowrap",
                 position: "relative",
-                textShadow: isActive ? `0 0 12px ${tab.color}60, 0 1px 2px rgba(0,0,0,0.5)` : "0 1px 3px rgba(0,0,0,0.6)",
+                textShadow: isActive ? `0 0 16px ${tab.color}70, 0 1px 2px rgba(0,0,0,0.5)` : "0 1px 3px rgba(0,0,0,0.6)",
+                boxShadow: isActive ? `0 -4px 12px ${tab.color}40` : "none",
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
                   e.target.style.opacity = "1";
                   e.target.style.color = tab.color;
-                  e.target.style.textShadow = `0 0 12px ${tab.color}60, 0 1px 2px rgba(0,0,0,0.5)`;
+                  e.target.style.textShadow = `0 0 14px ${tab.color}70, 0 1px 2px rgba(0,0,0,0.5)`;
+                  e.target.style.boxShadow = `0 -4px 16px ${tab.color}30, inset 0 1px 0 ${colors.border}`;
+                  e.target.style.background = `${tab.color}15`;
                 }
               }}
               onMouseLeave={(e) => {
@@ -2223,6 +2319,8 @@ export default function App() {
                   e.target.style.opacity = "0.85";
                   e.target.style.color = "rgba(255,255,255,0.75)";
                   e.target.style.textShadow = "0 1px 3px rgba(0,0,0,0.6)";
+                  e.target.style.boxShadow = "none";
+                  e.target.style.background = "transparent";
                 }
               }}
             >
@@ -3119,18 +3217,24 @@ export default function App() {
             width: 400,
             borderLeft: `1px solid ${colors.border}`,
             display: "flex", flexDirection: "column",
-            background: colors.surface,
-            backdropFilter: "blur(20px)",
+            background: theme === "dark"
+              ? "rgba(15, 25, 50, 0.5)"
+              : "rgba(255, 255, 255, 0.6)",
+            backdropFilter: "blur(30px)",
+            WebkitBackdropFilter: "blur(30px)",
             flexShrink: 0,
-            boxShadow: `-4px 0 16px rgba(0,0,0,0.08)`,
+            boxShadow: `-8px 0 24px ${theme === "dark" ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.08)"}`,
             animation: "slideInRight 0.3s ease",
           }}>
-            {/* Avatar header */}
+            {/* Avatar header with gradient overlay */}
             <div style={{
               padding: 20,
               borderBottom: `1px solid ${colors.border}`,
               display: "flex", alignItems: "flex-start", gap: 16,
-              background: colors.surfaceLight,
+              background: `linear-gradient(135deg, ${colors.surfaceLight}, ${colors.surface})`,
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              boxShadow: `inset 0 1px 0 ${colors.border}`,
             }}>
               <div style={{ transform: "scale(0.8)", transformOrigin: "top left", marginLeft: -8, marginTop: -8 }}>
                 <MaxAvatar
@@ -3171,22 +3275,28 @@ export default function App() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input Area */}
+            {/* Input Area with enhanced glass effect */}
             <div style={{
               padding: 14,
               borderTop: `1px solid ${colors.border}`,
-              background: colors.surfaceLight,
+              background: `linear-gradient(180deg, ${colors.surfaceLight}, ${colors.surface})`,
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
             }}>
               <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
                 <VoiceButton isListening={isListening} onToggle={toggleListening} disabled={isLoading} theme={theme} />
                 <div style={{
                   flex: 1,
-                  background: colors.surface,
-                  border: `1px solid ${isListening ? "#22c55e" : colors.border}`,
+                  background: `linear-gradient(135deg, ${colors.surface}, ${colors.surfaceLight})`,
+                  border: `1.5px solid ${isListening ? "#22c55e" : colors.border}`,
                   borderRadius: 14,
                   overflow: "hidden",
                   transition: "all 0.3s ease",
-                  boxShadow: isListening ? "0 0 12px rgba(34,197,94,0.3)" : "none",
+                  boxShadow: isListening
+                    ? "0 0 16px rgba(34,197,94,0.4), inset 1px 1px 0 rgba(34,197,94,0.2)"
+                    : "inset 1px 1px 0 " + colors.border,
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
                 }}>
                   <textarea
                     value={inputValue}
