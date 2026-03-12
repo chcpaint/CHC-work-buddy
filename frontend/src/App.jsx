@@ -2181,17 +2181,8 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Skill Assessments Section */}
+                {/* Skill Assessments Section - Grouped by Tier */}
                 <div>
-                  <h3 style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 900, fontSize: 18, letterSpacing: 2,
-                    textTransform: "uppercase",
-                    color: colors.textPrimary,
-                    marginBottom: 16,
-                  }}>
-                    Skill Assessments
-                  </h3>
                   {learningQuizzes.length === 0 ? (
                     <div style={{
                       color: colors.textSecondary, fontSize: 14, padding: 30, textAlign: "center",
@@ -2201,8 +2192,40 @@ export default function App() {
                       No quizzes available
                     </div>
                   ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
-                      {learningQuizzes.map((quiz, i) => (
+                    [
+                      { type: "product-knowledge", label: "Product Knowledge", icon: "📚", desc: "Learn PPG product specifications, mixing ratios, and application details" },
+                      { type: "skill-check", label: "Skill Checks", icon: "🔧", desc: "Validate hands-on procedure knowledge for each repair step" },
+                      { type: "safety-certification", label: "Safety & Certification", icon: "🏆", desc: "PPE safety, application conditions, and mastery certification exams" },
+                    ].map(tier => {
+                      const tierQuizzes = learningQuizzes.filter(q => q.quiz_type === tier.type);
+                      if (tierQuizzes.length === 0) return null;
+                      const passedCount = tierQuizzes.filter(q => q.passed).length;
+                      return (
+                        <div key={tier.type} style={{ marginBottom: 28 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                            <span style={{ fontSize: 22 }}>{tier.icon}</span>
+                            <h3 style={{
+                              fontFamily: "'Barlow Condensed', sans-serif",
+                              fontWeight: 900, fontSize: 18, letterSpacing: 2,
+                              textTransform: "uppercase",
+                              color: colors.textPrimary,
+                              margin: 0,
+                            }}>
+                              {tier.label}
+                            </h3>
+                            <span style={{
+                              fontSize: 12, color: colors.textSecondary, fontWeight: 500,
+                              background: colors.surfaceLight, padding: "3px 10px", borderRadius: 20,
+                              marginLeft: 4,
+                            }}>
+                              {passedCount}/{tierQuizzes.length} passed
+                            </span>
+                          </div>
+                          <p style={{ color: colors.textSecondary, fontSize: 13, margin: "0 0 14px 32px", lineHeight: 1.4 }}>
+                            {tier.desc}
+                          </p>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+                      {tierQuizzes.map((quiz, i) => (
                         <div
                           key={i}
                           onClick={() => openQuiz(quiz.slug)}
@@ -2227,7 +2250,7 @@ export default function App() {
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                            <div style={{ fontSize: 24 }}>✓</div>
+                            <div style={{ fontSize: 24 }}>{quiz.icon || "✓"}</div>
                             <div style={{ flex: 1 }}>
                               <h4 style={{ color: colors.textPrimary, margin: 0, fontWeight: 600, fontSize: 15 }}>
                                 {quiz.title?.[language] || quiz[`title_${language}`] || quiz.title_en || quiz.title?.en || quiz.title || "Quiz"}
@@ -2295,7 +2318,10 @@ export default function App() {
                           </div>
                         </div>
                       ))}
-                    </div>
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
