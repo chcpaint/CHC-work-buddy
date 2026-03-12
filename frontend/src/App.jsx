@@ -1597,6 +1597,7 @@ export default function App() {
       let fullText = "";
       let sources = [];
       let mediaResults = [];
+      let hasSpoken = false;  // Guard against multiple speak() calls
 
       while (true) {
         const { done, value } = await reader.read();
@@ -1635,7 +1636,11 @@ export default function App() {
                 updated[updated.length - 1] = { ...updated[updated.length - 1], content: fullText, media: mediaResults, sources, answerSource: data.answerSource || "unknown" };
                 return updated;
               });
-              speak(fullText); // Auto-speaks short summary only
+              // Only speak once per response — guard against SSE double-fire
+              if (!hasSpoken) {
+                hasSpoken = true;
+                speak(fullText);
+              }
             }
           } catch {}
         }
