@@ -1312,6 +1312,26 @@ export default function App() {
   const ttsAudioRef = useRef(null);  // Current playing Audio element
 
   // Core: fetch audio from backend TTS endpoint (cached on server)
+  // Browser TTS fallback — used only when cloud TTS fails
+  const speakBrowserFallback = useCallback((text, { onStart, onEnd, onError } = {}) => {
+    if (!("speechSynthesis" in window)) { onError?.(); return; }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.slice(0, 2000));
+    const langCode = language === "fr" ? "fr-CA" : language === "es" ? "es-MX" : "en-US";
+    utterance.lang = langCode;
+    utterance.rate = 0.92;
+    utterance.pitch = 0.85;
+    // Try to find a decent voice
+    const voices = window.speechSynthesis.getVoices();
+    const langVoices = voices.filter(v => v.lang.startsWith(langCode.slice(0, 2)));
+    if (langVoices.length > 0) utterance.voice = langVoices[0];
+    utterance.onstart = () => onStart?.();
+    utterance.onend = () => onEnd?.();
+    utterance.onerror = () => onError?.();
+    window.speechSynthesis.speak(utterance);
+  }, [language]);
+
+  // Core: fetch audio from backend TTS endpoint (cached on server), fallback to browser voice
   const playCloudTTS = useCallback(async (text, { onStart, onEnd, onError } = {}) => {
     try {
       // Stop any currently playing audio
@@ -1328,10 +1348,17 @@ export default function App() {
       });
 
       if (!res.ok) {
-        throw new Error(`TTS failed: ${res.status}`);
+        const errBody = await res.json().catch(() => ({}));
+        console.error("TTS API error:", res.status, errBody);
+        throw new Error(`TTS failed: ${res.status} — ${errBody.error || "unknown"}`);
       }
 
       const blob = await res.blob();
+      if (blob.size < 100) {
+        console.error("TTS returned suspiciously small audio:", blob.size, "bytes");
+        throw new Error("TTS returned empty audio");
+      }
+
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       ttsAudioRef.current = audio;
@@ -1342,19 +1369,23 @@ export default function App() {
         ttsAudioRef.current = null;
         onEnd?.();
       };
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error("Audio playback error:", e);
         URL.revokeObjectURL(url);
         ttsAudioRef.current = null;
-        onError?.();
+        // Fallback to browser TTS
+        console.warn("Falling back to browser TTS");
+        speakBrowserFallback(text, { onStart, onEnd, onError });
       };
 
       await audio.play();
     } catch (err) {
-      console.warn("Cloud TTS error:", err);
+      console.warn("Cloud TTS error, falling back to browser voice:", err.message);
       ttsAudioRef.current = null;
-      onError?.();
+      // Fallback to browser TTS so user always hears something
+      speakBrowserFallback(text, { onStart, onEnd, onError });
     }
-  }, [language]);
+  }, [language, speakBrowserFallback]);
 
   // Start a brief voice listener for "continue" / "yes" / "read it" commands
   const startContinueListener = useCallback((fullText) => {

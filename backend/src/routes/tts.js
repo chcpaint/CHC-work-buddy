@@ -35,15 +35,20 @@ ensureBucket();
 
 // TTS config
 const TTS_MODEL = 'gpt-4o-mini-tts';
-const TTS_VOICE = 'ash';          // Deep, clear male voice — fits "Max"
+const TTS_VOICE = 'echo';          // Male voice — deep, clear
 const TTS_RESPONSE_FORMAT = 'mp3';
 const MAX_TTS_CHARS = 3000;        // Hard cap to control cost
 const CACHE_BUCKET = 'tts-cache';  // Supabase Storage bucket name
 
-// Generate a deterministic cache key from text + voice config
+// Voice instruction — steer gpt-4o-mini-tts to sound like Max
+const VOICE_INSTRUCTIONS = 'Speak as a confident, knowledgeable middle-aged North American male. ' +
+  'Use a calm, professional, and clear tone — like a seasoned automotive industry expert explaining something to a colleague. ' +
+  'Moderate pace, natural pauses between sentences. Do not sound robotic or overly enthusiastic.';
+
+// Generate a deterministic cache key from text + voice config + instructions
 function cacheKey(text, voice, lang) {
   const hash = crypto.createHash('sha256')
-    .update(`${voice}:${lang}:${text}`)
+    .update(`v2:${voice}:${lang}:${VOICE_INSTRUCTIONS}:${text}`)
     .digest('hex')
     .slice(0, 24);
   return `${lang}/${hash}.mp3`;
@@ -101,8 +106,9 @@ ttsRouter.post('/', async (req, res) => {
       model: TTS_MODEL,
       voice: TTS_VOICE,
       input: cleanText,
+      instructions: VOICE_INSTRUCTIONS,
       response_format: TTS_RESPONSE_FORMAT,
-      speed: 0.95,  // Slightly slower for shop clarity
+      speed: 1.0,
     });
 
     const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
@@ -141,7 +147,7 @@ ttsRouter.post('/', async (req, res) => {
       return res.status(429).json({ error: 'TTS rate limit exceeded. Try again shortly.' });
     }
 
-    return res.status(500).json({ error: 'TTS generation failed' });
+    return res.status(500).json({ error: 'TTS generation failed', detail: err.message });
   }
 });
 
