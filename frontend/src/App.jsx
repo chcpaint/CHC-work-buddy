@@ -1482,6 +1482,13 @@ export default function App() {
   }, [language, playCloudTTS, playPrefetched]);
 
   const speak = useCallback(async (text, { fullRead = false } = {}) => {
+    // Lock guard — prevent duplicate speak() calls from any source
+    if (!fullRead && speakLockRef.current) {
+      console.log("[TTS] speak() blocked — already in progress");
+      return;
+    }
+    if (!fullRead) speakLockRef.current = true;
+
     // Stop any current audio (generation counter in playCloudTTS handles the rest)
     if (ttsAudioRef.current) {
       ttsAudioRef.current.pause();
@@ -1504,8 +1511,8 @@ export default function App() {
       // Direct full read — remainder only (already stripped of summary)
       await playCloudTTS(clean.slice(0, 3000), {
         onStart: () => setIsSpeaking(true),
-        onEnd: () => setIsSpeaking(false),
-        onError: () => setIsSpeaking(false),
+        onEnd: () => { setIsSpeaking(false); speakLockRef.current = false; },
+        onError: () => { setIsSpeaking(false); speakLockRef.current = false; },
       });
       return;
     }
@@ -1534,6 +1541,7 @@ export default function App() {
       onStart: () => setIsSpeaking(true),
       onEnd: () => {
         setIsSpeaking(false);
+        speakLockRef.current = false;  // Release lock after summary finishes
         if (isLongAnswer && hasRemainder) {
           // Store REMAINDER only — not the full text
           pendingFullTextRef.current = remainder;
@@ -1542,7 +1550,7 @@ export default function App() {
           startContinueListener(remainder);
         }
       },
-      onError: () => setIsSpeaking(false),
+      onError: () => { setIsSpeaking(false); speakLockRef.current = false; },
     });
   }, [language, getShortSummary, cleanForSpeech, playCloudTTS, prefetchTTS, startContinueListener]);
 
@@ -1558,6 +1566,7 @@ export default function App() {
     setIsSpeaking(false);
     setAwaitingContinue(false);
     pendingFullTextRef.current = null;
+    speakLockRef.current = false;  // Release speak lock
     // Clean up pre-fetched audio
     if (prefetchedAudioRef.current) {
       try { URL.revokeObjectURL(prefetchedAudioRef.current); } catch(e) {}
@@ -1656,6 +1665,7 @@ export default function App() {
 
   // Send message to AI agent
   const sendingRef = useRef(false);  // Ref-based guard — React state batching can't defeat this
+  const speakLockRef = useRef(false);  // Prevents speak() from being called multiple times
   const handleSendMessage = async (overrideText) => {
     const text = (overrideText || inputValue).trim();
     if (!text || isLoading || sendingRef.current) return;
