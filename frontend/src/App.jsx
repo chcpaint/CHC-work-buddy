@@ -1487,8 +1487,10 @@ export default function App() {
 
   const speak = useCallback(async (text, { fullRead = false } = {}) => {
     // Module-level lock — prevents duplicate speak() calls even across component instances
+    console.log("[TTS] speak() called — fullRead:", fullRead, "lockActive:", _speakLockActive, "textLen:", text?.length);
+    console.trace("[TTS] speak() call trace");
     if (!fullRead && _speakLockActive) {
-      console.log("[TTS] speak() blocked — already in progress");
+      console.log("[TTS] speak() BLOCKED — already in progress");
       return;
     }
     if (!fullRead) _speakLockActive = true;
@@ -1737,7 +1739,10 @@ export default function App() {
               // Only speak once per response — guard against SSE double-fire
               if (!hasSpoken) {
                 hasSpoken = true;
+                console.log("[TTS] handleSendMessage calling speak(), fullText length:", fullText.length);
                 speak(fullText);
+              } else {
+                console.log("[TTS] handleSendMessage — hasSpoken already true, skipping");
               }
             }
           } catch {}
