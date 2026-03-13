@@ -1127,6 +1127,10 @@ function MediaViewer({ item, onClose, theme = "dark" }) {
   );
 }
 
+// ─── Module-level TTS guards (shared across all component instances) ──
+let _ttsGeneration = 0;       // Generation counter for async TTS cancellation
+let _speakLockActive = false;  // Prevents duplicate speak() calls
+
 // ─── Main App ─────────────────────────────────────────────────
 export default function App() {
   const [activeTab, setActiveTab] = useState("vehicle-disassembly");
@@ -1284,13 +1288,13 @@ export default function App() {
   const pendingFullTextRef = useRef(null);
   const continueListenerRef = useRef(null);
   const ttsAudioRef = useRef(null);  // Current playing Audio element
-  const ttsGenRef = useRef(0);       // Generation counter — cancels stale TTS calls
+  // ttsGenRef replaced by module-level _ttsGeneration
   const prefetchedAudioRef = useRef(null);  // Pre-fetched continuation audio blob URL
 
   // ── Cloud TTS only — no browser voice fallback ──
-  // Uses generation counter: each new call increments the counter. If a stale
-  // call finishes fetching after a newer call started, it detects the mismatch
-  // and silently aborts. This prevents double-fire, overlapping audio, etc.
+  // Uses module-level generation counter: each new call increments _ttsGeneration.
+  // If a stale call finishes after a newer call started, it detects the mismatch
+  // and silently aborts. Module-level ensures it works even if component double-mounts.
   const playCloudTTS = useCallback(async (text, { onStart, onEnd, onError } = {}) => {
     // Stop any currently playing audio
     if (ttsAudioRef.current) {
@@ -1300,8 +1304,8 @@ export default function App() {
     }
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 
-    // Increment generation — any in-flight requests from older generations will be discarded
-    const thisGen = ++ttsGenRef.current;
+    // Increment module-level generation — stale requests from any instance will be discarded
+    const thisGen = ++_ttsGeneration;
     console.log("[TTS] Gen", thisGen, "— Requesting cloud TTS, lang:", language, "text length:", text.length);
 
     try {
@@ -1312,8 +1316,8 @@ export default function App() {
       });
 
       // Stale check — a newer speak() call happened while we were fetching
-      if (thisGen !== ttsGenRef.current) {
-        console.log("[TTS] Gen", thisGen, "— Stale, discarding (current gen:", ttsGenRef.current + ")");
+      if (thisGen !== _ttsGeneration) {
+        console.log("[TTS] Gen", thisGen, "— Stale, discarding (current gen:", _ttsGeneration + ")");
         return;
       }
 
@@ -1327,7 +1331,7 @@ export default function App() {
       const blob = await res.blob();
 
       // Stale check again after blob download
-      if (thisGen !== ttsGenRef.current) {
+      if (thisGen !== _ttsGeneration) {
         console.log("[TTS] Gen", thisGen, "— Stale after download, discarding");
         return;
       }
@@ -1364,7 +1368,7 @@ export default function App() {
 
       await audio.play();
     } catch (err) {
-      if (thisGen === ttsGenRef.current) {
+      if (thisGen === _ttsGeneration) {
         console.warn("[TTS] Gen", thisGen, "— Cloud TTS unavailable:", err.message);
         ttsAudioRef.current = null;
         onError?.();
@@ -1482,12 +1486,12 @@ export default function App() {
   }, [language, playCloudTTS, playPrefetched]);
 
   const speak = useCallback(async (text, { fullRead = false } = {}) => {
-    // Lock guard — prevent duplicate speak() calls from any source
-    if (!fullRead && speakLockRef.current) {
+    // Module-level lock — prevents duplicate speak() calls even across component instances
+    if (!fullRead && _speakLockActive) {
       console.log("[TTS] speak() blocked — already in progress");
       return;
     }
-    if (!fullRead) speakLockRef.current = true;
+    if (!fullRead) _speakLockActive = true;
 
     // Stop any current audio (generation counter in playCloudTTS handles the rest)
     if (ttsAudioRef.current) {
@@ -1511,8 +1515,8 @@ export default function App() {
       // Direct full read — remainder only (already stripped of summary)
       await playCloudTTS(clean.slice(0, 3000), {
         onStart: () => setIsSpeaking(true),
-        onEnd: () => { setIsSpeaking(false); speakLockRef.current = false; },
-        onError: () => { setIsSpeaking(false); speakLockRef.current = false; },
+        onEnd: () => { setIsSpeaking(false); _speakLockActive = false; },
+        onError: () => { setIsSpeaking(false); _speakLockActive = false; },
       });
       return;
     }
@@ -1541,7 +1545,7 @@ export default function App() {
       onStart: () => setIsSpeaking(true),
       onEnd: () => {
         setIsSpeaking(false);
-        speakLockRef.current = false;  // Release lock after summary finishes
+        _speakLockActive = false;  // Release lock after summary finishes
         if (isLongAnswer && hasRemainder) {
           // Store REMAINDER only — not the full text
           pendingFullTextRef.current = remainder;
@@ -1550,7 +1554,7 @@ export default function App() {
           startContinueListener(remainder);
         }
       },
-      onError: () => { setIsSpeaking(false); speakLockRef.current = false; },
+      onError: () => { setIsSpeaking(false); _speakLockActive = false; },
     });
   }, [language, getShortSummary, cleanForSpeech, playCloudTTS, prefetchTTS, startContinueListener]);
 
@@ -1566,7 +1570,7 @@ export default function App() {
     setIsSpeaking(false);
     setAwaitingContinue(false);
     pendingFullTextRef.current = null;
-    speakLockRef.current = false;  // Release speak lock
+    _speakLockActive = false;  // Release speak lock
     // Clean up pre-fetched audio
     if (prefetchedAudioRef.current) {
       try { URL.revokeObjectURL(prefetchedAudioRef.current); } catch(e) {}
@@ -1665,7 +1669,7 @@ export default function App() {
 
   // Send message to AI agent
   const sendingRef = useRef(false);  // Ref-based guard — React state batching can't defeat this
-  const speakLockRef = useRef(false);  // Prevents speak() from being called multiple times
+  // speakLockRef replaced by module-level _speakLockActive
   const handleSendMessage = async (overrideText) => {
     const text = (overrideText || inputValue).trim();
     if (!text || isLoading || sendingRef.current) return;
