@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { authFetch } from "./authFetch.js";
 
 // ─── API Base ────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_URL || "https://chc-work-buddy-production-5b0e.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://chc-work-buddy-production.up.railway.app";
 
 // ─── Industry SVG Icons ──────────────────────────────────────
 const TabIcon = ({ type, size = 22, color = "currentColor" }) => {
