@@ -1,7 +1,7 @@
 // authFetch.js — Auth-aware fetch with automatic token refresh
 // Prevents blank tabs when Supabase access tokens expire (default 1hr)
 
-const API_BASE = import.meta.env.VITE_API_URL || https://chc-work-buddy-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://chc-work-buddy-production.up.railway.app";
 
 export async function authFetch(url, options = {}) {
   const token = localStorage.getItem("bsai_token");
