@@ -21,6 +21,7 @@ const authLimiter = rateLimit({
 
 authRouter.use('/login', authLimiter);
 authRouter.use('/refresh', authLimiter);
+authRouter.use('/intranet-login', authLimiter);
 
 // POST /api/auth/login
 authRouter.post('/login', async (req, res) => {
@@ -80,6 +81,47 @@ authRouter.post('/refresh', async (req, res) => {
   } catch (err) {
     logger.error('Refresh error', { error: err.message });
     res.status(500).json({ error: 'Token refresh failed' });
+  }
+});
+
+// POST /api/auth/intranet-login
+// Single-tenant auto-login bypass for the CHC intranet rollout.
+// ENABLED only when both env vars are set. To disable for multi-tenant:
+// unset INTRANET_BYPASS_EMAIL and INTRANET_BYPASS_PASSWORD in Railway.
+//
+// When disabled, returns 404 so the endpoint behaves as if it doesn't exist.
+authRouter.post('/intranet-login', async (req, res) => {
+  const email = process.env.INTRANET_BYPASS_EMAIL;
+  const password = process.env.INTRANET_BYPASS_PASSWORD;
+
+  if (!email || !password) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      logger.error('Intranet auto-login failed at Supabase', { error: error.message, email });
+      return res.status(500).json({ error: 'Auto-login unavailable; please sign in manually' });
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    logger.info('Intranet auto-login granted', { userId: data.user.id, ip: req.ip });
+
+    res.json({
+      token: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      expiresAt: data.session.expires_at,
+      user: { ...data.user, ...profile },
+    });
+  } catch (err) {
+    logger.error('Intranet auto-login exception', { error: err.message });
+    res.status(500).json({ error: 'Auto-login failed' });
   }
 });
 

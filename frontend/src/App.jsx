@@ -1148,6 +1148,10 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("bsai_token"));
   const [user, setUser] = useState(null);
+  // Intranet auto-login: try the bypass endpoint on mount if no token.
+  // If it succeeds (env vars set on backend), user lands directly in the app.
+  // If it 404s (env vars unset = multi-tenant mode), falls through to login screen.
+  const [autoLoginPending, setAutoLoginPending] = useState(!localStorage.getItem("bsai_token"));
   const [loginMode, setLoginMode] = useState(true);
   const [authForm, setAuthForm] = useState({ email: "", password: "" });
   const [authError, setAuthError] = useState("");
@@ -1199,6 +1203,31 @@ export default function App() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Intranet auto-login attempt — runs whenever token becomes null.
+  // Backend returns 404 when intranet bypass is disabled (no env vars set).
+  useEffect(() => {
+    if (token) { setAutoLoginPending(false); return; }
+    let cancelled = false;
+    setAutoLoginPending(true);
+    fetch(`${API_BASE}/api/auth/intranet-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (cancelled) return;
+        if (data?.token) {
+          localStorage.setItem("bsai_token", data.token);
+          if (data.refreshToken) localStorage.setItem("bsai_refresh", data.refreshToken);
+          setToken(data.token);
+          setUser(data.user);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setAutoLoginPending(false); });
+    return () => { cancelled = true; };
+  }, [token]);
 
   // Save theme to localStorage
   useEffect(() => {
@@ -1796,6 +1825,32 @@ export default function App() {
     { key: "unique-finishes", label: "Unique Finishes" },
     { key: "finished-paint-procedures", label: "Finished Paint" },
   ];
+
+  // ─── Auto-login Loading State ─────────────────────────────
+  // Briefly shown while we attempt the intranet bypass on mount.
+  if (!token && autoLoginPending) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        background: colors.bg,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexDirection: "column", gap: 20,
+        fontFamily: "'Inter', 'Barlow', sans-serif",
+        color: colors.textSecondary,
+      }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%",
+          border: `3px solid ${colors.border}`,
+          borderTopColor: colors.accentSecondary,
+          animation: "spin 0.8s linear infinite",
+        }} />
+        <div style={{ fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>
+          Loading Body Shop Wiz…
+        </div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   // ─── Login Screen ─────────────────────────────────────────
   if (!token) {
