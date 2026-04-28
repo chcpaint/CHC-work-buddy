@@ -2,7 +2,11 @@
 dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/"
-healthcheckTimeout = 30
+# NOTE: no healthcheckPath here on purpose. The frontend serves a SPA via
+# `serve -l 3000` and the public domain is configured for port 3000 in
+# Railway's service Networking. Adding a healthcheckPath on a static
+# server caused Railway's healthcheck to time out (returns "service
+# unavailable" within 30s), blocking otherwise-good deploys. The backend
+# has its own /health endpoint and keeps healthcheckPath set there.
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
