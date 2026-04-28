@@ -21,9 +21,10 @@ RUN npm run build
 # Serve with Caddy — gzip/brotli compression, proper SPA fallback, no extra config needed.
 FROM caddy:2-alpine AS production
 
-# Caddyfile: serve dist, fall back to index.html for SPA routes,
-# disable on-disk access logs (Railway captures stdout)
-RUN echo $':80 {\n\
+# Caddyfile: serve dist, fall back to index.html for SPA routes.
+# Bind to whatever port Railway sets via PORT env var (defaults to 8080 if unset).
+# Caddy v2 supports {$ENV_VAR} substitution natively.
+RUN echo $':{$PORT:8080} {\n\
     root * /usr/share/caddy\n\
     encode gzip zstd\n\
     try_files {path} /index.html\n\
@@ -36,8 +37,10 @@ RUN echo $':80 {\n\
 
 COPY --from=build /app/dist /usr/share/caddy
 
-EXPOSE 80
+# Railway typically sets PORT to 8080. EXPOSE is documentation; Railway uses
+# the actually-bound port from runtime, not EXPOSE.
+EXPOSE 8080
 
-# Caddy is its own healthcheck-friendly server.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:80/ > /dev/null || exit 1
+# Healthcheck must use the same port. Use a shell so $PORT expands at runtime.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD sh -c 'wget -qO- http://localhost:${PORT:-8080}/ > /dev/null || exit 1'
