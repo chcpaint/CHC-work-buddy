@@ -2,6 +2,10 @@
 
 import { anthropic } from '../index.js';
 
+// Model name is configurable via env so we can swap models (e.g. when one is
+// deprecated) without redeploying code. Default keeps current behaviour.
+export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+
 // ─── Language Detection ───────────────────────────────────────
 
 export async function detectLanguage(text) {
