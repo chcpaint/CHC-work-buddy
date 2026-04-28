@@ -609,26 +609,6 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
           ? `0 4px 16px ${colors.accentSecondary}20`
           : `inset 1px 1px 0 ${colors.border}, 0 4px 12px rgba(0,0,0,0.08)`,
       }}>
-        {/* Continue Reading Banner — shown at TOP of message so it's always visible */}
-        {awaitingContinue && (
-          <div
-            onClick={() => onContinueReading && onContinueReading()}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              padding: "10px 16px", marginBottom: 10, borderRadius: 12,
-              background: "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.08))",
-              border: "1.5px solid rgba(34,197,94,0.4)",
-              cursor: "pointer",
-              animation: "pulseGlow 1.5s ease-in-out infinite",
-              boxShadow: "0 4px 16px rgba(34,197,94,0.25)",
-            }}
-          >
-            <span style={{ fontSize: 20 }}>🎙️</span>
-            <span style={{ color: "#22c55e", fontSize: 13, fontWeight: 700 }}>
-              Say "YES" or tap here to hear full answer
-            </span>
-          </div>
-        )}
         {/* Answer Source Badge — clickable */}
         {!isUser && message.answerSource && (
           <div
@@ -742,6 +722,27 @@ function ChatMessage({ message, isUser, onPlayVideo, onOpenDoc, theme = "dark", 
                 <span style={{ color: colors.accentPrimary, fontSize: 16, flexShrink: 0, opacity: 0.6 }}>→</span>
               </div>
             ))}
+          </div>
+        )}
+        {/* Continue Reading Banner — placed at BOTTOM of message so it lands where the user's eye finishes reading.
+            When TTS pauses for the "say YES" prompt, staff see the green pulse right below the answer instead of having to scroll up. */}
+        {awaitingContinue && (
+          <div
+            onClick={() => onContinueReading && onContinueReading()}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              padding: "10px 16px", marginTop: 12, borderRadius: 12,
+              background: "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.08))",
+              border: "1.5px solid rgba(34,197,94,0.4)",
+              cursor: "pointer",
+              animation: "pulseGlow 1.5s ease-in-out infinite",
+              boxShadow: "0 4px 16px rgba(34,197,94,0.25)",
+            }}
+          >
+            <span style={{ fontSize: 20 }}>🎙️</span>
+            <span style={{ color: "#22c55e", fontSize: 13, fontWeight: 700 }}>
+              Say "YES" or tap here to hear full answer
+            </span>
           </div>
         )}
       </div>
