@@ -18,29 +18,18 @@ ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 RUN npm run build
 
-# Serve with Caddy — gzip/brotli compression, proper SPA fallback, no extra config needed.
-FROM caddy:2-alpine AS production
+# Serve with the lightweight `serve` static server.
+# This was the original working configuration before April 21. We tried Caddy
+# for gzip/SPA-fallback, but Railway's port binding didn't play well with it.
+# Reverting to known-good. Caddy migration is a follow-up.
+FROM node:20-alpine AS production
 
-# Caddyfile: serve dist, fall back to index.html for SPA routes.
-# Bind to whatever port Railway sets via PORT env var (defaults to 8080 if unset).
-# Caddy v2 supports {$ENV_VAR} substitution natively.
-RUN echo $':{$PORT:8080} {\n\
-    root * /usr/share/caddy\n\
-    encode gzip zstd\n\
-    try_files {path} /index.html\n\
-    file_server\n\
-    log {\n\
-        output stdout\n\
-        format console\n\
-    }\n\
-}\n' > /etc/caddy/Caddyfile
+RUN npm install -g serve
 
-COPY --from=build /app/dist /usr/share/caddy
+COPY --from=build /app/dist /app/dist
 
-# Railway typically sets PORT to 8080. EXPOSE is documentation; Railway uses
-# the actually-bound port from runtime, not EXPOSE.
-EXPOSE 8080
+# Railway sets PORT at runtime; default to 3000 for local. `serve -s` enables
+# SPA fallback (sends index.html for unknown paths so React Router works).
+EXPOSE 3000
 
-# Healthcheck must use the same port. Use a shell so $PORT expands at runtime.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD sh -c 'wget -qO- http://localhost:${PORT:-8080}/ > /dev/null || exit 1'
+CMD sh -c 'serve -s /app/dist -l ${PORT:-3000}'
