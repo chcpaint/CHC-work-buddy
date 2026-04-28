@@ -1,10 +1,26 @@
 // routes/auth.js — Authentication endpoints using Supabase Auth
 
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { supabase } from '../index.js';
 import { logger } from '../utils/logger.js';
 
 export const authRouter = Router();
+
+// Stricter rate limit on auth endpoints to slow down credential stuffing.
+// 10 attempts/min/IP is enough for a normal user mistyping their password,
+// but rules out automated brute-force.
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please wait a minute and try again.' },
+  validate: { trustProxy: false, xForwardedForHeader: false },
+});
+
+authRouter.use('/login', authLimiter);
+authRouter.use('/refresh', authLimiter);
 
 // POST /api/auth/login
 authRouter.post('/login', async (req, res) => {
@@ -68,77 +84,16 @@ authRouter.post('/refresh', async (req, res) => {
 });
 
 // POST /api/auth/register
-authRouter.post('/register', async (req, res) => {
-  const { email, password, fullName } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    });
-
-    if (error) return res.status(400).json({ error: error.message });
-
-    // If email confirmation is enabled, session will be null.
-    // Auto-confirm the user via admin API so they can sign in immediately.
-    if (!data.session && data.user) {
-      logger.info('Auto-confirming user', { userId: data.user.id, email });
-
-      // Confirm the user's email via admin API
-      const { error: confirmError } = await supabase.auth.admin.updateUserById(
-        data.user.id,
-        { email_confirm: true }
-      );
-
-      if (confirmError) {
-        logger.error('Auto-confirm failed', { error: confirmError.message });
-        // Still return success — user was created, they just need manual confirmation
-        return res.json({
-          user: data.user,
-          message: 'Account created. Please check your email to confirm, then sign in.',
-          needsConfirmation: true,
-        });
-      }
-
-      // Now sign them in to get a session
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email, password,
-      });
-
-      if (signInError) {
-        logger.error('Post-confirm sign-in failed', { error: signInError.message });
-        return res.json({
-          user: data.user,
-          message: 'Account created and confirmed. Please sign in.',
-          needsConfirmation: false,
-        });
-      }
-
-      return res.json({
-        token: signInData.session.access_token,
-        refreshToken: signInData.session.refresh_token,
-        expiresAt: signInData.session.expires_at,
-        user: signInData.user,
-        message: 'Registration successful',
-      });
-    }
-
-    // If session exists (email confirmation disabled), return it directly
-    res.json({
-      token: data.session?.access_token,
-      refreshToken: data.session?.refresh_token,
-      expiresAt: data.session?.expires_at,
-      user: data.user,
-      message: 'Registration successful',
-    });
-  } catch (err) {
-    logger.error('Register error', { error: err.message });
-    res.status(500).json({ error: 'Registration failed' });
-  }
+// DISABLED for CHC intranet rollout: single shared account is provisioned manually.
+// To re-enable for multi-user mode, restore from git history (see review doc B2).
+authRouter.post('/register', (req, res) => {
+  logger.warn('Registration attempt blocked (single-user mode)', {
+    ip: req.ip,
+    email: req.body?.email || null,
+  });
+  return res.status(403).json({
+    error: 'Self-service registration is disabled. Contact your administrator for access.',
+  });
 });
 
 // POST /api/auth/logout

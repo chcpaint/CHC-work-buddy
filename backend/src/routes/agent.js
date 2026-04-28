@@ -4,7 +4,7 @@
 import { Router } from 'express';
 import { anthropic, openai, supabase } from '../index.js';
 import { generateEmbedding, matchDocuments } from '../services/rag.js';
-import { detectLanguage, getSystemPrompt } from '../services/anthropic.js';
+import { detectLanguage, getSystemPrompt, ANTHROPIC_MODEL } from '../services/anthropic.js';
 import { logger } from '../utils/logger.js';
 
 export const agentRouter = Router();
@@ -335,7 +335,7 @@ agentRouter.post('/query', async (req, res) => {
 
     let fullResponse = '';
     const stream = anthropic.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: ANTHROPIC_MODEL,
       max_tokens: maxTokens,
       system: getSystemPrompt(lang, tabSlug),
       messages,

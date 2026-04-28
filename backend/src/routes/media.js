@@ -64,11 +64,15 @@ mediaRouter.get('/search', async (req, res) => {
     if (results.length === 0) {
       logger.info('Media FTS returned 0 results, falling back to ilike', { q });
 
+      // Escape PostgREST .or() metacharacters so a comma/paren/backslash in the
+      // query doesn't break out of the filter expression.
+      const safeQ = q.replace(/[,()\\*]/g, '');
+
       let fallback = supabase
         .from('media_items')
         .select('*')
         .eq('is_active', true)
-        .or(`title.ilike.%${q}%,description.ilike.%${q}%`)
+        .or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`)
         .limit(Number(limit));
 
       if (tab)      fallback = fallback.eq('tab_slug', tab);

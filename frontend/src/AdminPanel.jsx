@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { authFetch } from "./authFetch.js";
-
-// ─── Config ───────────────────────────────────────────────────
-const API_BASE = import.meta?.env?.VITE_API_URL || "https://chc-work-buddy-production-5b0e.up.railway.app";
+import { API_BASE } from "./config.js";
 
 const TABS = [
   { slug: "vehicle-disassembly", label: "Vehicle Disassembly",   icon: "🔧", color: "#f97316" },

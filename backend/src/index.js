@@ -21,7 +21,7 @@ import { usersRouter } from './routes/users.js';
 import { learningRouter } from './routes/learning.js';
 import { videoScriptsRouter } from './routes/video-scripts.js';
 import { ttsRouter } from './routes/tts.js';
-import { authMiddleware } from './middleware/auth.js';
+import { authMiddleware, requireRole } from './middleware/auth.js';
 import { auditMiddleware } from './middleware/audit.js';
 import { logger } from './utils/logger.js';
 
@@ -177,7 +177,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRouter);
 
 // ─── Diagnostic: test AI + DB functions ──────────────────────
-app.get('/api/maintenance/test-agent', async (req, res) => {
+app.get('/api/maintenance/test-agent', authMiddleware, requireRole(['admin']), async (req, res) => {
   const results = { steps: [] };
   try {
     // Test 1: Can we query document_chunks?
@@ -217,7 +217,7 @@ app.get('/api/maintenance/test-agent', async (req, res) => {
     try {
       if (anthropic) {
         const resp = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
           max_tokens: 50,
           messages: [{ role: 'user', content: 'Say "hello" in one word.' }],
         });
@@ -236,7 +236,7 @@ app.get('/api/maintenance/test-agent', async (req, res) => {
 });
 
 // ─── Quick DB health check (no auth) — check document & media counts ──
-app.get('/api/maintenance/db-check', async (req, res) => {
+app.get('/api/maintenance/db-check', authMiddleware, requireRole(['admin']), async (req, res) => {
   try {
     const [docResult, mediaResult, docInactive, mediaInactive] = await Promise.all([
       supabase.from('documents').select('id, title, tab_slug, is_active', { count: 'exact' }).eq('is_active', true),
@@ -272,7 +272,7 @@ app.get('/api/maintenance/db-check', async (req, res) => {
 });
 
 // ─── Maintenance: one-time embedding backfill (no auth) ──────
-app.all('/api/maintenance/generate-embeddings', async (req, res) => {
+app.all('/api/maintenance/generate-embeddings', authMiddleware, requireRole(['admin']), async (req, res) => {
   try {
     // Create a fresh OpenAI client directly (in case the global one is null)
     const { default: OpenAI } = await import('openai');

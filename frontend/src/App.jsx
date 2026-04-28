@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { authFetch } from "./authFetch.js";
-
-// ─── API Base ────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_URL || "https://chc-work-buddy-production.up.railway.app";
+import { API_BASE } from "./config.js";
 
 // ─── Industry SVG Icons ──────────────────────────────────────
 const TabIcon = ({ type, size = 22, color = "currentColor" }) => {
@@ -1671,7 +1669,8 @@ export default function App() {
   const handleAuth = async () => {
     setAuthError("");
     try {
-      const endpoint = loginMode ? "/api/auth/login" : "/api/auth/register";
+      // Single-user mode: registration disabled, always login
+      const endpoint = "/api/auth/login";
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1983,25 +1982,11 @@ export default function App() {
                 e.target.style.boxShadow = `0 8px 24px ${colors.accentSecondary}40`;
               }}
             >
-              {loginMode ? "Sign In" : "Create Account"}
+              Sign In
             </button>
 
-            <button
-              onClick={() => { setLoginMode(!loginMode); setAuthError(""); }}
-              style={{
-                background: "none",
-                border: "none",
-                color: colors.textSecondary,
-                fontSize: 13,
-                cursor: "pointer",
-                transition: "color 0.2s",
-                fontWeight: 500,
-              }}
-              onMouseEnter={(e) => e.target.style.color = colors.accentPrimary}
-              onMouseLeave={(e) => e.target.style.color = colors.textSecondary}
-            >
-              {loginMode ? "Need an account? Register" : "Have an account? Sign in"}
-            </button>
+            {/* Registration disabled for CHC intranet rollout — single shared account.
+                Re-enable by restoring this toggle button from git history. */}
           </div>
 
           {/* Theme Toggle */}
