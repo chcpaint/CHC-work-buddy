@@ -28,8 +28,10 @@ RUN npm install -g serve
 
 COPY --from=build /app/dist /app/dist
 
-# Railway sets PORT at runtime; default to 3000 for local. `serve -s` enables
-# SPA fallback (sends index.html for unknown paths so React Router works).
+# Railway's public domain for this service routes to Port 3000 (see
+# service Settings -> Networking). Hard-bind to 3000 so the container,
+# EXPOSE, and Railway's proxy all agree. `serve -s` enables SPA fallback
+# (sends index.html for unknown paths so React Router works).
 EXPOSE 3000
 
-CMD sh -c 'serve -s /app/dist -l ${PORT:-3000}'
+CMD ["serve", "-s", "/app/dist", "-l", "3000"]
