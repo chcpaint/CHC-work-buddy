@@ -145,8 +145,8 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
           {/* Gradient Definitions */}
           <defs>
             <radialGradient id="skinGradient" cx="40%" cy="35%">
-              <stop offset="0%" stopColor="#d8a680" />
-              <stop offset="100%" stopColor="#b8845c" />
+              <stop offset="0%" stopColor="#f0d4ba" />
+              <stop offset="100%" stopColor="#d8b08c" />
             </radialGradient>
             <radialGradient id="hairGradient" cx="50%" cy="30%">
               <stop offset="0%" stopColor="#5a5a5a" />
@@ -235,8 +235,8 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
           <path d="M76 32 Q75 26 70 24" stroke="#6a6a6a" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
 
           {/* Ears */}
-          <ellipse cx="32" cy="55" rx="5" ry="7" fill="#b8845c" />
-          <ellipse cx="88" cy="55" rx="5" ry="7" fill="#b8845c" />
+          <ellipse cx="32" cy="55" rx="5" ry="7" fill="#d8b08c" />
+          <ellipse cx="88" cy="55" rx="5" ry="7" fill="#d8b08c" />
 
           {/* Safety glasses pushed up on forehead - polished */}
           <ellipse cx="42" cy="37" rx="8" ry="6" fill="url(#glassGradient)" opacity="0.7" stroke="#4499dd" strokeWidth="1.5" />
