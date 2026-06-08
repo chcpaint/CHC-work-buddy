@@ -153,14 +153,10 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
               <stop offset="100%" stopColor="#3a3a3a" />
             </radialGradient>
             <radialGradient id="coverallsGradient" cx="50%" cy="30%">
-              <stop offset="0%" stopColor="#4a5058" />
-              <stop offset="100%" stopColor="#2a2d32" />
+              <stop offset="0%" stopColor="#2a4570" />
+              <stop offset="100%" stopColor="#162d4f" />
             </radialGradient>
-            <radialGradient id="glassGradient" cx="30%" cy="30%">
-              <stop offset="0%" stopColor="#99d4ff" />
-              <stop offset="100%" stopColor="#4499dd" />
-            </radialGradient>
-            <filter id="avatarShadow" x="-50%" y="-50%" width="200%" height="200%">
+<filter id="avatarShadow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
               <feOffset dx="0" dy="3" result="offsetblur" />
               <feComponentTransfer>
@@ -185,39 +181,43 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
           {/* Subtle shadow under coveralls */}
           <rect x="18" y="122" width="84" height="4" rx="2" fill="rgba(0,0,0,0.2)" />
           {/* Coverall collar — folded down */}
-          <path d="M42 88 L38 96 L48 92Z" fill="#4a4e54" />
-          <path d="M78 88 L82 96 L72 92Z" fill="#4a4e54" />
+          <path d="M42 88 L38 96 L48 92Z" fill="#1f3a5c" />
+          <path d="M78 88 L82 96 L72 92Z" fill="#1f3a5c" />
           {/* Lapel lines */}
-          <line x1="45" y1="89" x2="42" y2="100" stroke="#2d3035" strokeWidth="1.5" />
-          <line x1="75" y1="89" x2="78" y2="100" stroke="#2d3035" strokeWidth="1.5" />
+          <line x1="45" y1="89" x2="42" y2="100" stroke="#0e2240" strokeWidth="1.5" />
+          <line x1="75" y1="89" x2="78" y2="100" stroke="#0e2240" strokeWidth="1.5" />
           {/* Center zipper line */}
-          <line x1="60" y1="92" x2="60" y2="120" stroke="#555960" strokeWidth="1.5" />
+          <line x1="60" y1="92" x2="60" y2="120" stroke="#2d4870" strokeWidth="1.5" />
           {/* Zipper pull */}
-          <rect x="58" y="93" width="4" height="5" rx="1" fill="#888d94" />
+          <rect x="58" y="93" width="4" height="5" rx="1" fill="#c8d4e0" />
           {/* Chest pocket — left */}
-          <rect x="35" y="98" width="14" height="10" rx="2" fill="none" stroke="#555960" strokeWidth="1" />
-          {/* Name patch on pocket */}
-          <rect x="36" y="99" width="12" height="4" rx="1" fill="#1e3a5f" />
-          <text x="42" y="102.5" textAnchor="middle" fill="white" fontSize="3" fontWeight="bold" fontFamily="sans-serif">MAX</text>
+          <rect x="35" y="98" width="14" height="10" rx="2" fill="none" stroke="#2d4870" strokeWidth="1" />
+          {/* CHC brand patch on left chest pocket — red with white wordmark */}
+          <rect x="34" y="98" width="16" height="6" rx="1.5" fill="#E01030" stroke="#A80A24" strokeWidth="0.4" />
+          <text x="42" y="102.6" textAnchor="middle" fill="white" fontSize="4.2" fontWeight="900" fontFamily="'Arial Black', sans-serif" letterSpacing="0.3">CHC</text>
           {/* Chest pocket — right */}
-          <rect x="71" y="98" width="14" height="10" rx="2" fill="none" stroke="#555960" strokeWidth="1" />
+          <rect x="71" y="98" width="14" height="10" rx="2" fill="none" stroke="#2d4870" strokeWidth="1" />
           {/* Pen in right pocket */}
-          <line x1="76" y1="96" x2="76" y2="102" stroke="#e85d3a" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="76" y1="96" x2="76" y2="102" stroke="#E01030" strokeWidth="1.8" strokeLinecap="round" />
           {/* Shoulder seam stitching */}
-          <path d="M35 87 Q44 84 46 87" stroke="#555960" strokeWidth="0.8" fill="none" strokeDasharray="2 1.5" />
-          <path d="M85 87 Q76 84 74 87" stroke="#555960" strokeWidth="0.8" fill="none" strokeDasharray="2 1.5" />
+          <path d="M35 87 Q44 84 46 87" stroke="#2d4870" strokeWidth="0.8" fill="none" strokeDasharray="2 1.5" />
+          <path d="M85 87 Q76 84 74 87" stroke="#2d4870" strokeWidth="0.8" fill="none" strokeDasharray="2 1.5" />
 
-          {/* Neck / visible undershirt */}
+          {/* CHC red shoulder piping for brand accent */}
+          <path d="M19 99 Q19 90 35 87" stroke="#E01030" strokeWidth="0.9" fill="none" strokeLinecap="round" opacity="0.85" />
+          <path d="M101 99 Q101 90 85 87" stroke="#E01030" strokeWidth="0.9" fill="none" strokeLinecap="round" opacity="0.85" />
+
+                    {/* Neck / visible undershirt */}
           <rect x="47" y="80" width="26" height="14" rx="6" fill="#c8956c" />
           {/* Crew-neck t-shirt visible */}
           <path d="M48 88 Q60 92 72 88 Q70 90 60 91 Q50 90 48 88Z" fill="#e8e8e8" />
 
           {/* Hood gathered behind neck (paint suit hood down) */}
-          <path d="M36 86 Q38 80 46 82 L46 87 Q40 86 36 86Z" fill="#4a4e54" opacity="0.7" />
-          <path d="M84 86 Q82 80 74 82 L74 87 Q80 86 84 86Z" fill="#4a4e54" opacity="0.7" />
+          <path d="M36 86 Q38 80 46 82 L46 87 Q40 86 36 86Z" fill="#1f3a5c" opacity="0.7" />
+          <path d="M84 86 Q82 80 74 82 L74 87 Q80 86 84 86Z" fill="#1f3a5c" opacity="0.7" />
           {/* Hood fabric folds */}
-          <path d="M38 84 Q42 81 46 83" stroke="#555960" strokeWidth="0.8" fill="none" />
-          <path d="M82 84 Q78 81 74 83" stroke="#555960" strokeWidth="0.8" fill="none" />
+          <path d="M38 84 Q42 81 46 83" stroke="#2d4870" strokeWidth="0.8" fill="none" />
+          <path d="M82 84 Q78 81 74 83" stroke="#2d4870" strokeWidth="0.8" fill="none" />
 
           {/* Head with radial gradient for depth */}
           <ellipse cx="60" cy="55" rx="28" ry="30" fill="url(#skinGradient)" />
@@ -238,14 +238,6 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
           <ellipse cx="32" cy="55" rx="5" ry="7" fill="#d8b08c" />
           <ellipse cx="88" cy="55" rx="5" ry="7" fill="#d8b08c" />
 
-          {/* Safety glasses pushed up on forehead - polished */}
-          <ellipse cx="42" cy="37" rx="8" ry="6" fill="url(#glassGradient)" opacity="0.7" stroke="#4499dd" strokeWidth="1.5" />
-          <ellipse cx="78" cy="37" rx="8" ry="6" fill="url(#glassGradient)" opacity="0.7" stroke="#4499dd" strokeWidth="1.5" />
-          <path d="M50 37 Q60 36 70 37" stroke="#4499dd" strokeWidth="1" opacity="0.5" strokeLinecap="round" />
-          {/* Glass shine/glint */}
-          <ellipse cx="40" cy="35" rx="3" ry="2" fill="white" opacity="0.4" />
-          <ellipse cx="76" cy="35" rx="3" ry="2" fill="white" opacity="0.4" />
-
           {/* Eyes - softer, rounder appearance */}
           <ellipse cx="48" cy="52" rx="8.5" ry={eyeBlink ? 1 : 6.5} fill="white" />
           <ellipse cx="72" cy="52" rx="8.5" ry={eyeBlink ? 1 : 6.5} fill="white" />
@@ -258,29 +250,36 @@ function MaxAvatar({ isSpeaking, isListening, language, onLanguageChange, theme 
           {/* Subtle eye shine */}
           <circle cx="51" cy="51" r="1.2" fill="white" />
           <circle cx="75" cy="51" r="1.2" fill="white" />
-          {/* Eyebrows - softer curves */}
-          <path d="M41 44 Q48 40.5 55 44" stroke="#3d3d3d" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.8" />
-          <path d="M65 44 Q72 40.5 79 44" stroke="#3d3d3d" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.8" />
+          {/* Eyebrows - relaxed friendly arc, slightly raised */}
+          <path d="M41 45 Q48 41 55 44" stroke="#3d3d3d" strokeWidth="1.9" fill="none" strokeLinecap="round" opacity="0.75" />
+          <path d="M65 44 Q72 41 79 45" stroke="#3d3d3d" strokeWidth="1.9" fill="none" strokeLinecap="round" opacity="0.75" />
 
           {/* Nose - smoother curves */}
           <path d="M59 55 Q57 61 59 64 Q60 65.5 61 64 Q63 61 61 55" stroke="#a86450" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7" />
 
-          {/* Mouth - smoother, more natural */}
+          {/* Mouth - warm friendly smile, deeper curve up at the corners */}
           <path
             d={mouthOpen
-              ? "M50 74 Q60 82 70 74 Q60 78 50 74Z"
-              : "M50 73 Q60 77 70 73"}
-            stroke="#8b5555" strokeWidth="1.8" fill={mouthOpen ? "#6a2a2a" : "none"} strokeLinecap="round"
+              ? "M46 70 Q60 84 74 70 Q60 80 46 70Z"
+              : "M46 70 Q60 80 74 70"}
+            stroke="#8b3a3a" strokeWidth="2" fill={mouthOpen ? "#7a2a2a" : "none"} strokeLinecap="round" strokeLinejoin="round"
           />
+          {/* Mouth corner lift dots - reinforces the smile */}
+          <circle cx="46.5" cy="70.5" r="0.8" fill="#a85050" opacity="0.6" />
+          <circle cx="73.5" cy="70.5" r="0.8" fill="#a85050" opacity="0.6" />
           {/* Teeth visible when talking - glossier */}
           {mouthOpen && (
             <>
-              <rect x="54" y="75" width="12" height="3" rx="1" fill="white" opacity="0.95" />
-              <rect x="54" y="75" width="12" height="1" rx="0.5" fill="rgba(255,255,255,0.3)" opacity="0.6" />
+              <rect x="52" y="72" width="16" height="3.5" rx="1.2" fill="white" opacity="0.95" />
+              <rect x="52" y="72" width="16" height="1.2" rx="0.5" fill="rgba(255,255,255,0.4)" opacity="0.7" />
             </>
           )}
 
-          {/* Subtle smile lines / character */}
+          {/* Cheek blush — warmth + friendliness */}
+          <ellipse cx="40" cy="63" rx="5" ry="3" fill="#f5a8a0" opacity="0.45" />
+          <ellipse cx="80" cy="63" rx="5" ry="3" fill="#f5a8a0" opacity="0.45" />
+
+                    {/* Subtle smile lines / character */}
           <path d="M44 68 Q45 69.5 44 71" stroke="#a87050" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.5" />
           <path d="M76 68 Q75 69.5 76 71" stroke="#a87050" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.5" />
 
