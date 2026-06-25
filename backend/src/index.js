@@ -552,6 +552,226 @@ app.get('/api/reports/monthly-csv', authMiddleware, async (req, res) => {
   }
 });
 
+// ─── Scheduled email delivery (called by Supabase pg_cron) ───
+// Auth model: shared secret. The Supabase pg_cron job sends a Bearer
+// header with REPORT_CRON_SECRET (configured in Railway). No user JWT.
+//
+// Env vars on backend:
+//   RESEND_API_KEY        Resend API key (re_...)
+//   REPORT_EMAIL_FROM     'Body Shop Wiz <onboarding@resend.dev>' default
+//   REPORT_EMAIL_TO       recipient address
+//   REPORT_CRON_SECRET    shared secret pg_cron sends in Authorization header
+//
+// Sends:
+//   - HTML email body with headline number + top questions + gaps preview
+//   - Multi-section CSV attachment with full report data
+
+app.post('/api/reports/send-monthly', async (req, res) => {
+  // Shared-secret auth — accept either header form
+  const provided = (req.headers.authorization || '').replace(/^Bearer\s+/i, '')
+                || req.headers['x-cron-secret']
+                || req.query.secret;
+  const expected = process.env.REPORT_CRON_SECRET;
+  if (!expected || provided !== expected) {
+    logger.warn('send-monthly: unauthorized', { ip: req.ip });
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const FROM = process.env.REPORT_EMAIL_FROM || 'Body Shop Wiz <onboarding@resend.dev>';
+  const TO   = (req.body?.to) || process.env.REPORT_EMAIL_TO;
+
+  if (!RESEND_API_KEY || !TO) {
+    return res.status(500).json({ error: 'Email not configured (set RESEND_API_KEY and REPORT_EMAIL_TO)' });
+  }
+
+  const days = Number(req.body?.days || req.query?.days || 30);
+  const sinceIso = new Date(Date.now() - days * 86400000).toISOString();
+
+  try {
+    // ─── Pull report data (same logic as /api/reports/full) ────
+    const { data: logs } = await supabase
+      .from('query_logs')
+      .select('query, answer_source, language, tab_slug, created_at')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(10000);
+    const rows = logs || [];
+
+    const bySource = { vector: 0, rag: 0, llm: 0, cache: 0 };
+    rows.forEach(r => { bySource[r.answer_source] = (bySource[r.answer_source] || 0) + 1; });
+    const total = rows.length;
+    const grounded = bySource.vector + bySource.rag + (bySource.cache || 0);
+    const coveragePercent = total > 0 ? Math.round((grounded / total) * 1000) / 10 : 100;
+
+    // Top questions
+    const topMap = new Map();
+    rows.forEach(r => {
+      const q = (r.query || '').trim().toLowerCase();
+      if (!q) return;
+      const e = topMap.get(q) || { question: q, count: 0 };
+      e.count += 1;
+      topMap.set(q, e);
+    });
+    const topQuestions = Array.from(topMap.values()).sort((a, b) => b.count - a.count).slice(0, 10);
+
+    // Gaps
+    const gapMap = new Map();
+    rows.filter(r => r.answer_source === 'llm').forEach(r => {
+      const k = (r.query || '').trim().toLowerCase();
+      const e = gapMap.get(k) || { question: r.query, count: 0, tabSlug: r.tab_slug };
+      e.count += 1;
+      gapMap.set(k, e);
+    });
+    const gaps = Array.from(gapMap.values()).sort((a, b) => b.count - a.count).slice(0, 10);
+
+    // By tab
+    const tabMap = new Map();
+    rows.forEach(r => {
+      const t = r.tab_slug || '(none)';
+      tabMap.set(t, (tabMap.get(t) || 0) + 1);
+    });
+    const byTab = Array.from(tabMap.entries()).map(([tab, count]) => ({ tab, count })).sort((a, b) => b.count - a.count);
+
+    // ─── Compose HTML body ──────────────────────────────────────
+    const periodFrom = sinceIso.slice(0, 10);
+    const periodTo   = new Date().toISOString().slice(0, 10);
+    const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const html = `<!DOCTYPE html>
+<html><body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+
+<div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+  <div style="background: #E01030; color: white; padding: 24px 28px;">
+    <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.9;">Body Shop Wiz</div>
+    <h1 style="margin: 4px 0 0; font-size: 24px; font-weight: 800;">Monthly Report · ${monthLabel}</h1>
+    <div style="font-size: 13px; margin-top: 6px; opacity: 0.9;">${periodFrom} → ${periodTo}</div>
+  </div>
+
+  <div style="padding: 28px;">
+
+    <div style="background: #fff5f7; border-left: 4px solid #E01030; padding: 16px 20px; border-radius: 4px; margin-bottom: 24px;">
+      <div style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #E01030; font-weight: 700;">Headline</div>
+      <div style="font-size: 18px; margin-top: 4px; line-height: 1.5;">
+        <strong>${total}</strong> questions answered &middot; <strong>${coveragePercent}%</strong> grounded in your document library
+      </div>
+    </div>
+
+    <h2 style="font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin: 24px 0 12px;">Source Breakdown</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">✅ Verified (vector search)</td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${bySource.vector || 0}</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">🔍 Database (keyword)</td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${bySource.rag || 0}</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">⚡ Answered from cache</td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: #a855f7;">${bySource.cache || 0}</td></tr>
+      <tr><td style="padding: 8px 0;">⚠️ General AI (no doc found)</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #f97316;">${bySource.llm || 0}</td></tr>
+    </table>
+
+    ${topQuestions.length > 0 ? `
+    <h2 style="font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin: 28px 0 12px;">Top Questions This Period</h2>
+    <ol style="padding-left: 20px; margin: 0; font-size: 14px; line-height: 1.7;">
+      ${topQuestions.map(q => `<li style="margin-bottom: 4px;"><strong style="color: #E01030;">×${q.count}</strong> &nbsp; ${q.question.replace(/</g, '&lt;')}</li>`).join('')}
+    </ol>
+    ` : ''}
+
+    ${gaps.length > 0 ? `
+    <h2 style="font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #f97316; margin: 28px 0 12px;">Knowledge Gaps — Upload Docs To Close These</h2>
+    <ul style="padding-left: 20px; margin: 0; font-size: 14px; line-height: 1.7;">
+      ${gaps.map(g => `<li style="margin-bottom: 4px;"><strong style="color: #f97316;">×${g.count}</strong> &nbsp; ${(g.question || '').replace(/</g, '&lt;')} <span style="color: #94a3b8; font-size: 12px;">(${g.tabSlug || 'no tab'})</span></li>`).join('')}
+    </ul>
+    ` : '<p style="color: #22c55e; margin: 28px 0 0;">✓ No knowledge gaps this period — your document library covered every question.</p>'}
+
+    ${byTab.length > 0 ? `
+    <h2 style="font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin: 28px 0 12px;">Activity by Tab</h2>
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      ${byTab.map(t => `<tr><td style="padding: 6px 0;">${t.tab}</td><td style="padding: 6px 0; text-align: right; font-weight: 600;">${t.count}</td></tr>`).join('')}
+    </table>
+    ` : ''}
+
+    <div style="margin-top: 32px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 13px; color: #64748b;">
+      📎 The full CSV is attached. Open in Excel or Numbers to see all questions, dates, and per-tab breakdowns.<br><br>
+      Want to dig in interactively? Open the admin Reports page at <a href="https://chc-work-buddy-frontend-production.up.railway.app/admin" style="color: #E01030;">Body Shop Wiz Admin</a>.
+    </div>
+
+  </div>
+</div>
+
+<div style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 16px;">
+  Body Shop Wiz · CHC Paint and Auto Body Supplies · Automated monthly digest
+</div>
+
+</body></html>`;
+
+    // ─── Build CSV attachment (same shape as /monthly-csv) ──────
+    const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const lines = [
+      `# Body Shop Wiz — Monthly Snapshot — ${periodFrom} to ${periodTo}`,
+      '## Overall Coverage',
+      'Metric,Value',
+      `Total questions,${total}`,
+      `Vector search,${bySource.vector || 0}`,
+      `Keyword/RAG,${bySource.rag || 0}`,
+      `Cache,${bySource.cache || 0}`,
+      `LLM fallback,${bySource.llm || 0}`,
+      `Coverage %,${coveragePercent}`,
+      '',
+      '## Top Questions',
+      'Question,Times asked',
+      ...topQuestions.map(q => `${esc(q.question)},${q.count}`),
+      '',
+      '## Knowledge Gaps',
+      'Question,Times asked,Tab',
+      ...gaps.map(g => `${esc(g.question)},${g.count},${esc(g.tabSlug)}`),
+      '',
+      '## Activity by Tab',
+      'Tab,Questions',
+      ...byTab.map(t => `${esc(t.tab)},${t.count}`),
+    ];
+    const csv = lines.join('\n');
+    const csvB64 = Buffer.from(csv, 'utf-8').toString('base64');
+
+    // ─── Send via Resend API ──────────────────────────────────
+    const subject = `Body Shop Wiz — Monthly Report — ${monthLabel}`;
+    const resendBody = {
+      from: FROM,
+      to: Array.isArray(TO) ? TO : [TO],
+      subject,
+      html,
+      attachments: [{
+        filename: `bodyshopwiz-${periodTo}.csv`,
+        content: csvB64,
+      }],
+    };
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(resendBody),
+    });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      logger.error('Resend send failed', { status: resendRes.status, body: errBody });
+      return res.status(502).json({ error: 'Email send failed', detail: errBody });
+    }
+
+    const sendResult = await resendRes.json();
+    logger.info('Monthly report email sent', { id: sendResult.id, to: TO, total, days });
+    res.json({
+      success: true,
+      email_id: sendResult.id,
+      sent_to: TO,
+      period: { from: periodFrom, to: periodTo, days },
+      stats: { total, coveragePercent },
+    });
+
+  } catch (err) {
+    logger.error('send-monthly error', { error: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Q&A Cache Admin (admin/manager only) ────────────────────
 import { getCacheStats, getTopCached, clearCache } from './services/qa_cache.js';
 
