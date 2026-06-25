@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { anthropic, openai, supabase } from '../index.js';
 import { generateEmbedding, matchDocuments } from '../services/rag.js';
+import { findCachedAnswer, storeCachedAnswer } from '../services/qa_cache.js';
 import { detectLanguage, getSystemPrompt, ANTHROPIC_MODEL } from '../services/anthropic.js';
 import { logger } from '../utils/logger.js';
 
@@ -73,9 +74,42 @@ agentRouter.post('/query', async (req, res) => {
     }
 
     const lang = language || await detectLanguage(message) || 'en';
+
+    // ─── Tier 1 cache check — serve from cache and skip Anthropic ───
+    // Translation requests bypass cache because the same source text can be
+    // requested in different output languages.
+    const wantsTranslation = hasTranslationIntent(message) || lang !== 'en';
+    if (!wantsTranslation) {
+      const cached = await findCachedAnswer(message, tabSlug, lang);
+      if (cached) {
+        // Send the cached answer as a single streaming chunk.
+        res.write(`data: ${JSON.stringify({ type: 'text', content: cached.answer })}\n\n`);
+
+        if (cached.media?.length) {
+          res.write(`data: ${JSON.stringify({ type: 'media', media: cached.media })}\n\n`);
+        }
+        if (cached.sources?.length) {
+          res.write(`data: ${JSON.stringify({ type: 'sources', sources: cached.sources })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({
+          type: 'done',
+          language: lang,
+          hadVideo: (cached.media?.length || 0) > 0,
+          answerSource: cached.answerSource,
+          cached: true,
+          cacheMatchType: cached.matchType,
+        })}\n\n`);
+        res.end();
+
+        // Still log the query for history / knowledge-gap analytics
+        saveToSession(userId, sessionId, message, cached.answer, lang, cached.sources, cached.media || [], voiceInput);
+        logQuery(userId, message, cached.answerSource || 'cache', cached.sources, lang, tabSlug);
+        return;
+      }
+    }
+
     const wantsVideo = hasVideoIntent(message);
     const wantsMediaInventory = hasMediaInventoryIntent(message);
-    const wantsTranslation = hasTranslationIntent(message) || lang !== 'en';
     const videoSearchTerms = wantsVideo ? extractVideoSearchTerms(message) : null;
 
     // Run embedding search, keyword search (tab-filtered + cross-tab), and media search in parallel
@@ -379,6 +413,20 @@ agentRouter.post('/query', async (req, res) => {
     // Save to session AND log the query for knowledge gap tracking
     saveToSession(userId, sessionId, message, fullResponse, lang, docSources, mediaResults, voiceInput);
     logQuery(userId, message, answerSource, docSources, lang, tabSlug);
+
+    // ─── Tier 1 cache store — make repeat questions instant from now on ───
+    // Don't cache translation requests (output language varies per request).
+    if (!wantsTranslation) {
+      storeCachedAnswer({
+        query: message,
+        tabSlug,
+        language: lang,
+        answer: fullResponse,
+        sources: docSources,
+        media: mediaResults,
+        answerSource,
+      }).catch(() => {}); // best-effort, never block response
+    }
 
   } catch (error) {
     // Verbose logging so the actual cause is visible in Railway logs.

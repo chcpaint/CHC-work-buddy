@@ -386,6 +386,37 @@ app.get('/api/query-logs/summary', authMiddleware, async (req, res) => {
   });
 });
 
+// ─── Q&A Cache Admin (admin/manager only) ────────────────────
+import { getCacheStats, getTopCached, clearCache } from './services/qa_cache.js';
+
+app.get('/api/cache/stats', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  const days = Number(req.query.days || 30);
+  res.json(await getCacheStats(days));
+});
+
+app.get('/api/cache/top', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  try {
+    const rows = await getTopCached(req.query.limit || 25);
+    res.json({ entries: rows, total: rows.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/cache/clear', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  try {
+    const { tabSlug, olderThanDays, query } = req.body || {};
+    const result = await clearCache({ tabSlug, olderThanDays, query });
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ─── Existing query-logs export ──────────────────────────────
 app.get('/api/query-logs/export', authMiddleware, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
   const { days = 30 } = req.query;

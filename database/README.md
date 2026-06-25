@@ -15,6 +15,7 @@ Run these in order, one file at a time, against your CHC Supabase project. Skip 
 | 3 | `migrations/003_learning_schema.sql` | Adds Learning tab tables (guides, quizzes) |
 | 4 | `migrations/004_query_logs.sql` | Adds knowledge-gap reporting table |
 | 5 | `migrations/004_update_su4902_to_su470lv.sql` | One-off product code rename **(see naming note below)** |
+| 6 | `migrations/005_qa_cache.sql` | Adds answer-cache table for Tier 1 self-sufficiency |
 
 ### 2. Optional content seeds — pick what you want
 
