@@ -386,6 +386,172 @@ app.get('/api/query-logs/summary', authMiddleware, async (req, res) => {
   });
 });
 
+// ─── Full-report aggregate (drives the admin Reports page) ────
+app.get('/api/reports/full', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  const days = Number(req.query.days || 30);
+  const sinceIso = new Date(Date.now() - days * 86400000).toISOString();
+
+  try {
+    // Pull every logged query in the window once, then aggregate in memory.
+    const { data: logs, error: logsErr } = await supabase
+      .from('query_logs')
+      .select('query, answer_source, language, tab_slug, matched_docs, created_at')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(10000);
+    if (logsErr) throw logsErr;
+    const rows = logs || [];
+
+    // Coverage breakdown
+    const bySource = { vector: 0, rag: 0, llm: 0, cache: 0 };
+    rows.forEach(r => { bySource[r.answer_source] = (bySource[r.answer_source] || 0) + 1; });
+    const total = rows.length;
+    const grounded = bySource.vector + bySource.rag + (bySource.cache || 0);
+    const coveragePercent = total > 0 ? Math.round((grounded / total) * 1000) / 10 : 100;
+
+    // Top questions
+    const topMap = new Map();
+    rows.forEach(r => {
+      const q = (r.query || '').trim().toLowerCase();
+      if (!q) return;
+      const entry = topMap.get(q) || { question: q, count: 0, sources: new Set(), lastAsked: r.created_at };
+      entry.count += 1;
+      entry.sources.add(r.answer_source);
+      if (r.created_at > entry.lastAsked) entry.lastAsked = r.created_at;
+      topMap.set(q, entry);
+    });
+    const topQuestions = Array.from(topMap.values())
+      .sort((a, b) => b.count - a.count || new Date(b.lastAsked) - new Date(a.lastAsked))
+      .slice(0, 25)
+      .map(e => ({ question: e.question, count: e.count, sources: Array.from(e.sources), lastAsked: e.lastAsked }));
+
+    // Knowledge gaps (llm-source only)
+    const gapMap = new Map();
+    rows.filter(r => r.answer_source === 'llm').forEach(r => {
+      const key = (r.query || '').trim().toLowerCase() + '|' + (r.tab_slug || '');
+      const entry = gapMap.get(key) || {
+        question: (r.query || '').trim(), count: 0, tabSlug: r.tab_slug, lastAsked: r.created_at,
+      };
+      entry.count += 1;
+      if (r.created_at > entry.lastAsked) entry.lastAsked = r.created_at;
+      gapMap.set(key, entry);
+    });
+    const knowledgeGaps = Array.from(gapMap.values())
+      .sort((a, b) => b.count - a.count || new Date(b.lastAsked) - new Date(a.lastAsked))
+      .slice(0, 30);
+
+    // By tab
+    const tabMap = new Map();
+    rows.forEach(r => {
+      const tab = r.tab_slug || '(none)';
+      const e = tabMap.get(tab) || { tab, questions: 0, fromDocs: 0, fromLlm: 0 };
+      e.questions += 1;
+      if (['vector','rag','cache'].includes(r.answer_source)) e.fromDocs += 1;
+      if (r.answer_source === 'llm') e.fromLlm += 1;
+      tabMap.set(tab, e);
+    });
+    const byTab = Array.from(tabMap.values()).sort((a, b) => b.questions - a.questions);
+
+    // Daily activity (last 30 days regardless of `days` param)
+    const dailyMap = new Map();
+    const recent = rows.filter(r => new Date(r.created_at) > new Date(Date.now() - 30 * 86400000));
+    recent.forEach(r => {
+      const d = r.created_at.slice(0, 10);
+      dailyMap.set(d, (dailyMap.get(d) || 0) + 1);
+    });
+    const daily = Array.from(dailyMap.entries())
+      .map(([day, count]) => ({ day, count }))
+      .sort((a, b) => a.day.localeCompare(b.day));
+
+    // Languages
+    const langMap = new Map();
+    rows.forEach(r => {
+      const l = r.language || '?';
+      langMap.set(l, (langMap.get(l) || 0) + 1);
+    });
+    const languages = Array.from(langMap.entries())
+      .map(([lang, count]) => ({ lang, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Cache stats
+    const cacheStats = await getCacheStats(days).catch(() => null);
+
+    res.json({
+      period: { days, from: sinceIso.slice(0,10), to: new Date().toISOString().slice(0,10) },
+      total, bySource, coveragePercent,
+      topQuestions, knowledgeGaps, byTab, daily, languages,
+      cacheStats,
+    });
+  } catch (err) {
+    logger.error('Full report error', { error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Monthly snapshot CSV — packaged for sharing/emailing ────
+app.get('/api/reports/monthly-csv', authMiddleware, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
+  const days = Number(req.query.days || 30);
+
+  // Hand-rolled to avoid a CSV dep — fetches the same data the JSON endpoint produces.
+  try {
+    const internalRes = await fetch(
+      `http://localhost:${process.env.PORT || 3001}/api/reports/full?days=${days}`,
+      { headers: { Authorization: req.headers.authorization } }
+    );
+    const d = await internalRes.json();
+
+    const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const lines = [];
+    lines.push(`# Body Shop Wiz — Monthly Snapshot — ${d.period?.from} to ${d.period?.to}`);
+    lines.push(`# Generated ${new Date().toISOString()}`);
+    lines.push('');
+    lines.push('## Overall Coverage');
+    lines.push('Metric,Value');
+    lines.push(`Total questions,${d.total}`);
+    lines.push(`Vector search,${d.bySource?.vector || 0}`);
+    lines.push(`Keyword/RAG,${d.bySource?.rag || 0}`);
+    lines.push(`Cache,${d.bySource?.cache || 0}`);
+    lines.push(`LLM fallback,${d.bySource?.llm || 0}`);
+    lines.push(`Coverage %,${d.coveragePercent}`);
+    lines.push('');
+    lines.push('## Top Questions');
+    lines.push('Question,Times asked,Sources,Last asked');
+    (d.topQuestions || []).forEach(q => lines.push([esc(q.question), q.count, esc((q.sources||[]).join('|')), q.lastAsked?.slice(0,10)].join(',')));
+    lines.push('');
+    lines.push('## Knowledge Gaps');
+    lines.push('Question,Times asked,Tab,Last asked');
+    (d.knowledgeGaps || []).forEach(g => lines.push([esc(g.question), g.count, esc(g.tabSlug), g.lastAsked?.slice(0,10)].join(',')));
+    lines.push('');
+    lines.push('## Activity by Tab');
+    lines.push('Tab,Questions,From docs,From general AI');
+    (d.byTab || []).forEach(t => lines.push([esc(t.tab), t.questions, t.fromDocs, t.fromLlm].join(',')));
+    lines.push('');
+    lines.push('## Daily Activity (last 30 days)');
+    lines.push('Day,Questions');
+    (d.daily || []).forEach(x => lines.push(`${x.day},${x.count}`));
+    lines.push('');
+    lines.push('## Languages');
+    lines.push('Language,Questions');
+    (d.languages || []).forEach(x => lines.push(`${esc(x.lang)},${x.count}`));
+    lines.push('');
+    lines.push('## Cache');
+    if (d.cacheStats) {
+      lines.push(`Cache enabled,${d.cacheStats.enabled}`);
+      lines.push(`Cached questions,${d.cacheStats.cached_questions || 0}`);
+      lines.push(`Total cache hits,${d.cacheStats.total_hits || 0}`);
+      lines.push(`Hits last ${days} days,${d.cacheStats.hits_last_30d || 0}`);
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=bodyshopwiz-snapshot-${d.period?.to || 'today'}.csv`);
+    res.send(lines.join('\n'));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Q&A Cache Admin (admin/manager only) ────────────────────
 import { getCacheStats, getTopCached, clearCache } from './services/qa_cache.js';
 

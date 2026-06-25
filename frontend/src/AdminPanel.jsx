@@ -1175,11 +1175,202 @@ const NAV = [
   { id: "library",   label: "Library",    icon: "📚" },
   { id: "media",     label: "Media",      icon: "🎬" },
   { id: "users",     label: "Users",      icon: "👥" },
-  { id: "knowledge", label: "Knowledge Gap", icon: "📊" },
+  { id: "knowledge", label: "Reports", icon: "📊" },
   { id: "settings",  label: "Settings",   icon: "⚙" },
 ];
 
 // ─── MAIN ADMIN APP ───────────────────────────────────────────
+// ReportsExtended — wraps the existing KnowledgeGap view and adds:
+//   • time-window selector (7/30/90/365 days)
+//   • top-questions table
+//   • activity by tab
+//   • daily activity sparkline
+//   • language breakdown
+//   • cache stats card
+//   • "Download monthly snapshot CSV" button
+// Drives off the new /api/reports/full endpoint.
+
+function ReportsExtended({ token, onToast }) {
+  const api = useApi(token);
+  const [days, setDays] = useState(30);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api(`/api/reports/full?days=${days}`)
+      .then(r => { if (!cancelled) setData(r); })
+      .catch(e => onToast?.("Failed to load report: " + e.message, "error"))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [days]);
+
+  const downloadCSV = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/reports/monthly-csv?days=${days}`);
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bodyshopwiz-snapshot-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      onToast?.("Snapshot downloaded", "success");
+    } catch (e) {
+      onToast?.("Download failed: " + e.message, "error");
+    }
+  };
+
+  if (loading || !data) {
+    return <div style={{ padding: 40, textAlign: "center", color: "#94a3b8" }}>Loading reports…</div>;
+  }
+
+  // ── Source breakdown numbers
+  const srcColor = { vector: "#22c55e", rag: "#3b82f6", cache: "#a855f7", llm: "#f97316" };
+  const srcLabel = { vector: "Verified", rag: "Database", cache: "Cached", llm: "AI General" };
+
+  // ── Daily sparkline (simple inline SVG)
+  const maxDaily = Math.max(1, ...data.daily.map(d => d.count));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Header + controls */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <SectionTitle>Usage Reports</SectionTitle>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select value={days} onChange={e => setDays(+e.target.value)} style={{ background: "#0a1220", color: "#f1f5f9", border: "1px solid #1e3a5f", borderRadius: 6, padding: "6px 10px", fontSize: 11 }}>
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+            <option value={365}>Last 365 days</option>
+          </select>
+          <Btn variant="primary" onClick={downloadCSV} style={{ padding: "6px 14px", fontSize: 11 }}>⬇ Download Snapshot</Btn>
+        </div>
+      </div>
+
+      {/* Tip card for monthly cadence */}
+      <div style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 10, padding: "10px 14px", fontSize: 11, color: "#c4b5fd" }}>
+        💡 <strong>Tip:</strong> Click "Download Snapshot" on the first of every month to keep a monthly record. The CSV opens in Excel or any spreadsheet app and can be emailed to leadership.
+      </div>
+
+      {/* Top stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+        <StatCard icon="📊" label="Total Queries" value={data.total} color="#f97316" />
+        <StatCard icon="✅" label="Verified (Vector)" value={data.bySource.vector || 0} sub={data.total ? `${Math.round(((data.bySource.vector || 0) / data.total) * 100)}%` : "0%"} color="#22c55e" />
+        <StatCard icon="🔍" label="Database (RAG)" value={data.bySource.rag || 0} sub={data.total ? `${Math.round(((data.bySource.rag || 0) / data.total) * 100)}%` : "0%"} color="#3b82f6" />
+        <StatCard icon="⚡" label="Cache Hits" value={data.bySource.cache || 0} sub={data.total ? `${Math.round(((data.bySource.cache || 0) / data.total) * 100)}%` : "0%"} color="#a855f7" />
+        <StatCard icon="⚠️" label="AI General" value={data.bySource.llm || 0} sub={data.total ? `${Math.round(((data.bySource.llm || 0) / data.total) * 100)}%` : "0%"} color="#f97316" />
+        <StatCard icon="🛡️" label="Coverage" value={`${data.coveragePercent}%`} sub="Grounded in docs" color={data.coveragePercent >= 80 ? "#22c55e" : data.coveragePercent >= 50 ? "#eab308" : "#ef4444"} />
+      </div>
+
+      {/* Daily activity sparkline */}
+      {data.daily?.length > 0 && (
+        <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Daily Activity — Last 30 Days</div>
+          <svg width="100%" height="80" viewBox={`0 0 ${data.daily.length * 30} 80`} preserveAspectRatio="none">
+            {data.daily.map((d, i) => {
+              const h = (d.count / maxDaily) * 60;
+              return (
+                <g key={i}>
+                  <rect x={i * 30 + 6} y={70 - h} width="18" height={h} fill="#f97316" opacity="0.7" rx="2">
+                    <title>{d.day}: {d.count} questions</title>
+                  </rect>
+                  <text x={i * 30 + 15} y={78} fontSize="8" fill="#64748b" textAnchor="middle">{d.day.slice(5)}</text>
+                </g>
+              );
+            })}
+          </svg>
+          <div style={{ fontSize: 10, color: "#64748b", marginTop: 4, textAlign: "center" }}>
+            Peak day: {Math.max(...data.daily.map(d => d.count))} questions
+          </div>
+        </div>
+      )}
+
+      {/* Top questions */}
+      {data.topQuestions?.length > 0 && (
+        <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Most-Asked Questions</div>
+          <div style={{ maxHeight: 320, overflow: "auto" }}>
+            {data.topQuestions.map((q, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 6, background: i % 2 === 0 ? "rgba(30,58,95,0.15)" : "transparent", fontSize: 12 }}>
+                <span style={{ minWidth: 32, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, background: "#f9731622", color: "#f97316", textAlign: "center" }}>×{q.count}</span>
+                <span style={{ flex: 1, color: "#cbd5e1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.question}</span>
+                <span style={{ fontSize: 10, color: "#64748b", flexShrink: 0 }}>{q.sources.join(", ")}</span>
+                <span style={{ fontSize: 10, color: "#64748b", flexShrink: 0 }}>{q.lastAsked?.slice(0,10)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Knowledge gaps */}
+      {data.knowledgeGaps?.length > 0 && (
+        <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #f9731633", borderRadius: 10, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "#f97316", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Knowledge Gaps — Upload Docs To Close These</div>
+          {data.knowledgeGaps.map((gap, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: 6, background: i % 2 === 0 ? "rgba(249,115,22,0.05)" : "transparent", fontSize: 12, color: "#cbd5e1" }}>
+              <span style={{ minWidth: 32, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, background: "#f9731622", color: "#f97316", marginRight: 10, textAlign: "center" }}>×{gap.count}</span>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{gap.question}</span>
+              <span style={{ fontSize: 10, color: "#64748b", flexShrink: 0, marginLeft: 12 }}>{gap.tabSlug || "—"}</span>
+              <span style={{ fontSize: 10, color: "#f97316", fontWeight: 600, flexShrink: 0, marginLeft: 12 }}>{gap.lastAsked?.slice(0,10)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* By tab + languages side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+        {data.byTab?.length > 0 && (
+          <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16 }}>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Activity by Workflow Tab</div>
+            {data.byTab.map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 4px", fontSize: 12 }}>
+                <span style={{ flex: 1, color: "#cbd5e1" }}>{t.tab}</span>
+                <span style={{ minWidth: 60, color: "#94a3b8", textAlign: "right" }}>{t.questions}</span>
+                <span style={{ minWidth: 90, color: "#22c55e", fontSize: 10, textAlign: "right" }}>{t.fromDocs} from docs</span>
+                {t.fromLlm > 0 && <span style={{ minWidth: 50, color: "#f97316", fontSize: 10, textAlign: "right" }}>{t.fromLlm} LLM</span>}
+              </div>
+            ))}
+          </div>
+        )}
+        {data.languages?.length > 0 && (
+          <div style={{ background: "rgba(10,18,32,0.7)", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16 }}>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Languages</div>
+            {data.languages.map((l, i) => {
+              const langName = { en: "English", fr: "Français", es: "Español" }[l.lang] || l.lang;
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", padding: "6px 4px", fontSize: 12 }}>
+                  <span style={{ flex: 1, color: "#cbd5e1" }}>{langName}</span>
+                  <span style={{ color: "#94a3b8" }}>{l.count}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Cache stats */}
+      {data.cacheStats && (
+        <div style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 10, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "#a855f7", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Answer Cache Status</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
+            <StatCard icon="⚡" label="Enabled"            value={data.cacheStats.enabled ? "Yes" : "No"} color="#a855f7" />
+            <StatCard icon="📦" label="Cached Questions"  value={data.cacheStats.cached_questions || 0} color="#a855f7" />
+            <StatCard icon="🎯" label="Total Cache Hits"  value={data.cacheStats.total_hits || 0} color="#a855f7" />
+            <StatCard icon="📅" label={`Hits Last ${days}d`} value={data.cacheStats.hits_last_30d || 0} color="#a855f7" />
+          </div>
+          <div style={{ marginTop: 12, fontSize: 11, color: "#94a3b8" }}>
+            Every cache hit is a question answered <em>without</em> calling the Anthropic API — instant response, zero LLM cost.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function AdminPanel() {
   const [token, setToken] = useState(
     typeof localStorage !== "undefined" ? (localStorage.getItem("bsai_token") || "") : ""
@@ -1371,7 +1562,7 @@ export default function AdminPanel() {
           {section === "library"   && <DocumentLibrary token={token} onToast={addToast} refreshKey={refreshKey} />}
           {section === "media"     && <MediaManager token={token} onToast={addToast} refreshKey={refreshKey} />}
           {section === "users"     && <UserManagement token={token} onToast={addToast} />}
-          {section === "knowledge" && <KnowledgeGap token={token} onToast={addToast} />}
+          {section === "knowledge" && <ReportsExtended token={token} onToast={addToast} />}
           {section === "settings"  && <Settings token={token} onToast={addToast} />}
         </div>
       </main>
