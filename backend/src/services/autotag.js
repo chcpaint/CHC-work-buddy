@@ -6,6 +6,7 @@
 
 import { anthropic } from '../index.js';
 import { logger } from '../utils/logger.js';
+import { ANTHROPIC_MODEL } from '../services/anthropic.js';
 
 const VALID_TABS = [
   'vehicle-disassembly', 'auto-body-repairs',
@@ -29,7 +30,7 @@ export async function autoTagDocument(text, existingMetadata = {}) {
     const sample = text.slice(0, 3000);
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: ANTHROPIC_MODEL,
       max_tokens: 300,
       system: `You are a tagging assistant for an automotive body shop knowledge base. Analyze the document text and return a JSON object with:
 - "tags": array of 5-10 lowercase keyword tags relevant to body shop work (e.g., "paint mixing", "sds", "ppe", "bondo", "clear coat", "sanding", "primer")
@@ -86,7 +87,7 @@ export async function autoTagMedia(metadata = {}) {
     if (!context) return null;
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: ANTHROPIC_MODEL,
       max_tokens: 200,
       system: `You are a tagging assistant for an automotive body shop video/media library. Analyze the media metadata and return a JSON object with:
 - "tags": array of 5-8 lowercase tags for browsing/filtering (e.g., "spray technique", "clear coat", "ppe")

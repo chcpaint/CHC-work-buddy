@@ -4,7 +4,7 @@ import { anthropic } from '../index.js';
 
 // Model name is configurable via env so we can swap models (e.g. when one is
 // deprecated) without redeploying code. Default keeps current behaviour.
-export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5';
 
 // ─── Language Detection ───────────────────────────────────────
 
@@ -243,7 +243,7 @@ export async function getAgentResponse(message, context = '', language = 'en') {
   const systemPrompt = getSystemPrompt(language);
   
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: ANTHROPIC_MODEL,
     max_tokens: 512,
     system: systemPrompt,
     messages: [

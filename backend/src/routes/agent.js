@@ -381,7 +381,13 @@ agentRouter.post('/query', async (req, res) => {
     logQuery(userId, message, answerSource, docSources, lang, tabSlug);
 
   } catch (error) {
-    logger.error('Agent query error', { error: error.message, stack: error.stack, userId });
+    // Verbose logging so the actual cause is visible in Railway logs.
+    // console.error guarantees it lands in stdout regardless of logger config.
+    console.error('[agent.query] FAILED', {
+      userId, msg: error?.message, status: error?.status, type: error?.type,
+      anthropicError: error?.error?.error?.message,
+    });
+    logger.error('Agent query error', { error: error.message, stack: error.stack, userId, anthropicStatus: error?.status });
     try {
       res.write(`data: ${JSON.stringify({ type: 'text', content: 'Sorry, something went wrong processing your question. Please try again.' })}\n\n`);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);

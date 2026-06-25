@@ -5,6 +5,7 @@
 import { Router } from 'express';
 import { anthropic, supabase } from '../index.js';
 import { logger } from '../utils/logger.js';
+import { ANTHROPIC_MODEL } from '../services/anthropic.js';
 
 export const videoScriptsRouter = Router();
 
@@ -95,7 +96,7 @@ STYLE NOTES:
 - Keep the energy up — this is a training video, not a lecture`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: ANTHROPIC_MODEL,
       max_tokens: 4096,
       messages: [{ role: 'user', content: scriptPrompt }],
     });
@@ -202,7 +203,7 @@ videoScriptsRouter.post('/download/:documentId', async (req, res) => {
     const langNames = { en: 'English', fr: 'French', es: 'Spanish' };
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: ANTHROPIC_MODEL,
       max_tokens: 4096,
       messages: [{
         role: 'user',
