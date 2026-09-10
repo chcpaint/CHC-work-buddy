@@ -116,7 +116,7 @@ export async function ingestDocument(documentId, rawText) {
 export async function matchDocuments(queryEmbedding, options = {}) {
   const {
     tabFilter = null,
-    matchCount = 8,
+    matchCount = 50,
     threshold = 0.40,
   } = options;
 
@@ -140,7 +140,7 @@ export async function matchDocuments(queryEmbedding, options = {}) {
 // ─── Hybrid Search (vector + keyword) ────────────────────────
 
 export async function hybridSearch(query, options = {}) {
-  const { tabFilter, limit = 10 } = options;
+  const { tabFilter, limit = 50 } = options;
 
   // Run both searches in parallel
   const [embedding, keywordData] = await Promise.all([
