@@ -1601,7 +1601,7 @@ export default function App() {
     if (!searchQuery.trim() || !token) return;
     setSearchLoading(true);
     try {
-      const res = await authFetch(`${API_BASE}/api/search?q=${encodeURIComponent(searchQuery)}&tab=${activeTab}`);
+      const res = await authFetch(`${API_BASE}/api/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch {}
